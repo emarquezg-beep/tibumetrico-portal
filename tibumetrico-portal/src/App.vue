@@ -344,9 +344,9 @@ function headshotUrl(pid) {
                   </tr>
 
                   <!-- Ficha Expandida: Historial Temporada por Temporada -->
-                  <tr v-if="expandidoId === j.player_id" class="bg-slate-950/90">
+                  <tr v-if="expandidoId === j.player_id" class="bg-slate-950/95">
                     <td colspan="9" class="p-4 md:p-6 border-t border-slate-800">
-                      <div class="space-y-4">
+                      <div class="space-y-5">
                         <div class="flex flex-wrap items-center justify-between gap-2">
                           <h3 class="text-sm font-bold text-cyan-300">
                             Expediente Multi-Liga de {{ j.nombre }}
@@ -360,28 +360,60 @@ function headshotUrl(pid) {
                         <!-- Historial de Bateo -->
                         <div v-if="j.historial_bateo && j.historial_bateo.length > 0">
                           <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                            Historial Ofensivo por Temporada
+                            Historial Ofensivo por Temporada (Convencional + Sabermetría)
                           </h4>
                           <div class="overflow-x-auto rounded-lg border border-slate-800">
-                            <table class="w-full text-xs text-left">
+                            <table class="w-full text-xs text-left whitespace-nowrap">
                               <thead class="bg-slate-900 text-slate-400 uppercase text-[10px]">
                                 <tr>
-                                  <th class="py-2 px-3">Año</th>
-                                  <th class="py-2 px-3">Liga</th>
-                                  <th class="py-2 px-3">Equipo</th>
-                                  <th class="py-2 px-3 text-right">PA</th>
-                                  <th class="py-2 px-3 text-right">OPS Real</th>
-                                  <th class="py-2 px-3 text-right">OPS Eq. LVBP</th>
+                                  <th class="py-2 px-2.5">Año</th>
+                                  <th class="py-2 px-2.5">Liga</th>
+                                  <th class="py-2 px-2.5">Equipo</th>
+                                  <th class="py-2 px-2 text-right">JJ</th>
+                                  <th class="py-2 px-2 text-right">PA</th>
+                                  <th class="py-2 px-2 text-right">VB</th>
+                                  <th class="py-2 px-2 text-right">H</th>
+                                  <th class="py-2 px-2 text-right">2B</th>
+                                  <th class="py-2 px-2 text-right">3B</th>
+                                  <th class="py-2 px-2 text-right">HR</th>
+                                  <th class="py-2 px-2 text-right">CI</th>
+                                  <th class="py-2 px-2 text-right">BB</th>
+                                  <th class="py-2 px-2 text-right">SO</th>
+                                  <th class="py-2 px-2 text-right">BR</th>
+                                  <th class="py-2 px-2 text-right">AVG</th>
+                                  <th class="py-2 px-2 text-right">OBP</th>
+                                  <th class="py-2 px-2 text-right">SLG</th>
+                                  <th class="py-2 px-2 text-right">OPS</th>
+                                  <th class="py-2 px-2 text-right text-cyan-300">ISO</th>
+                                  <th class="py-2 px-2 text-right text-cyan-300">BB%</th>
+                                  <th class="py-2 px-2 text-right text-cyan-300">K%</th>
+                                  <th class="py-2 px-2.5 text-right text-emerald-300">OPS Eq.</th>
                                 </tr>
                               </thead>
-                              <tbody class="divide-y divide-slate-800/70">
-                                <tr v-for="(h, idxH) in j.historial_bateo" :key="idxH">
-                                  <td class="py-1.5 px-3 font-mono text-slate-300">{{ h.season }}</td>
-                                  <td class="py-1.5 px-3 font-medium text-cyan-200">{{ h.liga }}</td>
-                                  <td class="py-1.5 px-3 text-slate-400">{{ h.equipo || '—' }}</td>
-                                  <td class="py-1.5 px-3 text-right font-mono">{{ h.pa }}</td>
-                                  <td class="py-1.5 px-3 text-right font-mono text-slate-300">{{ h.ops.toFixed(3) }}</td>
-                                  <td class="py-1.5 px-3 text-right font-mono font-semibold text-emerald-300">{{ h.ops_eq.toFixed(3) }}</td>
+                              <tbody class="divide-y divide-slate-800/70 font-mono">
+                                <tr v-for="(h, idxH) in j.historial_bateo" :key="idxH" class="hover:bg-slate-900/60">
+                                  <td class="py-1.5 px-2.5 text-slate-300">{{ h.season }}</td>
+                                  <td class="py-1.5 px-2.5 font-sans font-semibold text-cyan-200">{{ h.liga }}</td>
+                                  <td class="py-1.5 px-2.5 font-sans text-slate-400">{{ h.equipo || '—' }}</td>
+                                  <td class="py-1.5 px-2 text-right text-slate-400">{{ h.jj || '—' }}</td>
+                                  <td class="py-1.5 px-2 text-right">{{ h.pa }}</td>
+                                  <td class="py-1.5 px-2 text-right text-slate-300">{{ h.ab || '—' }}</td>
+                                  <td class="py-1.5 px-2 text-right text-slate-300">{{ h.h ?? '—' }}</td>
+                                  <td class="py-1.5 px-2 text-right text-slate-400">{{ h.d2 ?? '—' }}</td>
+                                  <td class="py-1.5 px-2 text-right text-slate-400">{{ h.d3 ?? '—' }}</td>
+                                  <td class="py-1.5 px-2 text-right text-white font-semibold">{{ h.hr ?? '—' }}</td>
+                                  <td class="py-1.5 px-2 text-right text-slate-300">{{ h.rbi ?? '—' }}</td>
+                                  <td class="py-1.5 px-2 text-right text-slate-400">{{ h.bb ?? '—' }}</td>
+                                  <td class="py-1.5 px-2 text-right text-slate-400">{{ h.so ?? '—' }}</td>
+                                  <td class="py-1.5 px-2 text-right text-slate-400">{{ h.sb ?? '—' }}</td>
+                                  <td class="py-1.5 px-2 text-right text-slate-200">{{ h.avg ? h.avg.toFixed(3) : '—' }}</td>
+                                  <td class="py-1.5 px-2 text-right text-slate-200">{{ h.obp ? h.obp.toFixed(3) : '—' }}</td>
+                                  <td class="py-1.5 px-2 text-right text-slate-200">{{ h.slg ? h.slg.toFixed(3) : '—' }}</td>
+                                  <td class="py-1.5 px-2 text-right font-semibold text-white">{{ h.ops.toFixed(3) }}</td>
+                                  <td class="py-1.5 px-2 text-right text-cyan-300">{{ h.iso != null ? h.iso.toFixed(3) : '—' }}</td>
+                                  <td class="py-1.5 px-2 text-right text-cyan-300">{{ h.bb_pct ? h.bb_pct.toFixed(1) + '%' : '—' }}</td>
+                                  <td class="py-1.5 px-2 text-right text-cyan-300">{{ h.k_pct ? h.k_pct.toFixed(1) + '%' : '—' }}</td>
+                                  <td class="py-1.5 px-2.5 text-right font-bold text-emerald-300">{{ h.ops_eq.toFixed(3) }}</td>
                                 </tr>
                               </tbody>
                             </table>
@@ -391,32 +423,56 @@ function headshotUrl(pid) {
                         <!-- Historial de Pitcheo -->
                         <div v-if="j.historial_picheo && j.historial_picheo.length > 0">
                           <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                            Historial de Pitcheo por Temporada
+                            Historial de Pitcheo por Temporada (Convencional + Sabermetría)
                           </h4>
                           <div class="overflow-x-auto rounded-lg border border-slate-800">
-                            <table class="w-full text-xs text-left">
+                            <table class="w-full text-xs text-left whitespace-nowrap">
                               <thead class="bg-slate-900 text-slate-400 uppercase text-[10px]">
                                 <tr>
-                                  <th class="py-2 px-3">Año</th>
-                                  <th class="py-2 px-3">Liga</th>
-                                  <th class="py-2 px-3">Equipo</th>
-                                  <th class="py-2 px-3 text-right">BF</th>
-                                  <th class="py-2 px-3 text-right">K-BB% Real</th>
-                                  <th class="py-2 px-3 text-right">K-BB% Eq. LVBP</th>
+                                  <th class="py-2 px-2.5">Año</th>
+                                  <th class="py-2 px-2.5">Liga</th>
+                                  <th class="py-2 px-2.5">Equipo</th>
+                                  <th class="py-2 px-2 text-right">JJ</th>
+                                  <th class="py-2 px-2 text-right">JI</th>
+                                  <th class="py-2 px-2 text-right">G-P</th>
+                                  <th class="py-2 px-2 text-right">SV</th>
+                                  <th class="py-2 px-2 text-right">IP</th>
+                                  <th class="py-2 px-2 text-right">H</th>
+                                  <th class="py-2 px-2 text-right">CL</th>
+                                  <th class="py-2 px-2 text-right">HR</th>
+                                  <th class="py-2 px-2 text-right">BB</th>
+                                  <th class="py-2 px-2 text-right">SO</th>
+                                  <th class="py-2 px-2 text-right">ERA</th>
+                                  <th class="py-2 px-2 text-right">WHIP</th>
+                                  <th class="py-2 px-2 text-right text-cyan-300">FIP</th>
+                                  <th class="py-2 px-2 text-right text-cyan-300">K/9</th>
+                                  <th class="py-2 px-2 text-right text-cyan-300">BB/9</th>
+                                  <th class="py-2 px-2 text-right text-cyan-300">K-BB%</th>
+                                  <th class="py-2 px-2.5 text-right text-emerald-300">K-BB% Eq.</th>
                                 </tr>
                               </thead>
-                              <tbody class="divide-y divide-slate-800/70">
-                                <tr v-for="(p, idxP) in j.historial_picheo" :key="idxP">
-                                  <td class="py-1.5 px-3 font-mono text-slate-300">{{ p.season }}</td>
-                                  <td class="py-1.5 px-3 font-medium text-cyan-200">{{ p.liga }}</td>
-                                  <td class="py-1.5 px-3 text-slate-400">{{ p.equipo || '—' }}</td>
-                                  <td class="py-1.5 px-3 text-right font-mono">{{ p.bf }}</td>
-                                  <td class="py-1.5 px-3 text-right font-mono text-slate-300">
-                                    {{ p.kbb >= 0 ? '+' : '' }}{{ p.kbb.toFixed(2) }}%
-                                  </td>
-                                  <td class="py-1.5 px-3 text-right font-mono font-semibold text-emerald-300">
-                                    {{ p.kbb_eq >= 0 ? '+' : '' }}{{ p.kbb_eq.toFixed(2) }}%
-                                  </td>
+                              <tbody class="divide-y divide-slate-800/70 font-mono">
+                                <tr v-for="(p, idxP) in j.historial_picheo" :key="idxP" class="hover:bg-slate-900/60">
+                                  <td class="py-1.5 px-2.5 text-slate-300">{{ p.season }}</td>
+                                  <td class="py-1.5 px-2.5 font-sans font-semibold text-cyan-200">{{ p.liga }}</td>
+                                  <td class="py-1.5 px-2.5 font-sans text-slate-400">{{ p.equipo || '—' }}</td>
+                                  <td class="py-1.5 px-2 text-right text-slate-400">{{ p.jj || '—' }}</td>
+                                  <td class="py-1.5 px-2 text-right text-slate-400">{{ p.ji ?? '—' }}</td>
+                                  <td class="py-1.5 px-2 text-right text-slate-300">{{ p.w ?? 0 }}-{{ p.l ?? 0 }}</td>
+                                  <td class="py-1.5 px-2 text-right text-slate-300">{{ p.sv ?? 0 }}</td>
+                                  <td class="py-1.5 px-2 text-right text-white font-semibold">{{ p.ip || '—' }}</td>
+                                  <td class="py-1.5 px-2 text-right text-slate-400">{{ p.h ?? '—' }}</td>
+                                  <td class="py-1.5 px-2 text-right text-slate-400">{{ p.er ?? '—' }}</td>
+                                  <td class="py-1.5 px-2 text-right text-slate-400">{{ p.hr ?? '—' }}</td>
+                                  <td class="py-1.5 px-2 text-right text-slate-400">{{ p.bb ?? '—' }}</td>
+                                  <td class="py-1.5 px-2 text-right text-slate-200">{{ p.so ?? '—' }}</td>
+                                  <td class="py-1.5 px-2 text-right font-semibold text-white">{{ p.era != null ? p.era.toFixed(2) : '—' }}</td>
+                                  <td class="py-1.5 px-2 text-right text-slate-200">{{ p.whip != null ? p.whip.toFixed(2) : '—' }}</td>
+                                  <td class="py-1.5 px-2 text-right text-cyan-300">{{ p.fip != null ? p.fip.toFixed(2) : '—' }}</td>
+                                  <td class="py-1.5 px-2 text-right text-cyan-300">{{ p.k9 ? p.k9.toFixed(1) : '—' }}</td>
+                                  <td class="py-1.5 px-2 text-right text-cyan-300">{{ p.bb9 ? p.bb9.toFixed(1) : '—' }}</td>
+                                  <td class="py-1.5 px-2 text-right text-cyan-300">{{ p.kbb >= 0 ? '+' : '' }}{{ p.kbb.toFixed(2) }}%</td>
+                                  <td class="py-1.5 px-2.5 text-right font-bold text-emerald-300">{{ p.kbb_eq >= 0 ? '+' : '' }}{{ p.kbb_eq.toFixed(2) }}%</td>
                                 </tr>
                               </tbody>
                             </table>
