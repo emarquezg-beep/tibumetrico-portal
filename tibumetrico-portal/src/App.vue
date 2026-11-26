@@ -1,56 +1,98 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 
+const vistaActiva = ref('lvbp') // 'lvbp' | 'caribe'
 const cargando = ref(true)
 const error = ref(null)
-const meta = ref({
+
+// Datos LVBP
+const metaLvbp = ref({
   season: 2026,
   fecha_corte: '',
-  generado_utc: '',
-  total_jugadores: 0,
   total_activos: 0,
   total_anunciados: 0,
 })
-const jugadores = ref([])
+const jugadoresLvbp = ref([])
 
-// Filtros UI
+// Datos Caribe (4 Ligas)
+const metaCaribe = ref({
+  season: 2026,
+  total_equipos: 0,
+  total_jugadores: 0,
+})
+const equiposCaribe = ref([])
+const jugadoresCaribe = ref([])
+
+// Filtros LVBP
 const busqueda = ref('')
 const filtroEquipo = ref('TODOS')
-const filtroRol = ref('TODOS') // TODOS | Bateador | Lanzador
-const filtroEstado = ref('TODOS') // TODOS | Activo | Anunciado
+const filtroRol = ref('TODOS')
+const filtroEstado = ref('TODOS')
 const soloMuestraMinima = ref(false)
 const expandidoId = ref(null)
 
+// Filtros Caribe
+const busquedaCaribe = ref('')
+const filtroLigaCaribe = ref('TODAS') // TODAS | LVBP | LIDOM | LMP | LBPRC
+const filtroEquipoCaribe = ref('TODOS')
+const filtroRolCaribe = ref('TODOS')
+const soloMuestraCaribe = ref(true)
+
+// Simulador Serie del Caribe (Neutral)
+const simEquipoA = ref('')
+const simEquipoB = ref('')
+
 onMounted(async () => {
   try {
-    const res = await fetch('/data/portal_jugadores.json', { cache: 'no-store' })
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    const data = await res.json()
-    meta.value = {
-      season: data.season,
-      fecha_corte: data.fecha_corte,
-      generado_utc: data.generado_utc,
-      total_jugadores: data.total_jugadores,
-      total_activos: data.total_activos,
-      total_anunciados: data.total_anunciados,
+    const [resLvbp, resCaribe] = await Promise.all([
+      fetch('/data/portal_jugadores.json', { cache: 'no-store' }),
+      fetch('/data/portal_caribe.json', { cache: 'no-store' }).catch(() => null),
+    ])
+
+    if (!resLvbp.ok) throw new Error(`HTTP ${resLvbp.status} al cargar LVBP`)
+    const dataLvbp = await resLvbp.json()
+    metaLvbp.value = {
+      season: dataLvbp.season,
+      fecha_corte: dataLvbp.fecha_corte,
+      total_activos: dataLvbp.total_activos,
+      total_anunciados: dataLvbp.total_anunciados,
     }
-    jugadores.value = data.jugadores || []
+    jugadoresLvbp.value = dataLvbp.jugadores || []
+
+    if (resCaribe && resCaribe.ok) {
+      const dataCaribe = await resCaribe.json()
+      metaCaribe.value = {
+        season: dataCaribe.season,
+        total_equipos: dataCaribe.total_equipos,
+        total_jugadores: dataCaribe.total_jugadores,
+      }
+      equiposCaribe.value = dataCaribe.ranking_equipos || []
+      jugadoresCaribe.value = dataCaribe.jugadores || []
+
+      if (equiposCaribe.value.length >= 2) {
+        simEquipoA.value = equiposCaribe.value[0].equipo
+        const rivalOtraLiga = equiposCaribe.value.find(
+          (e) => e.liga !== equiposCaribe.value[0].liga
+        )
+        simEquipoB.value = rivalOtraLiga ? rivalOtraLiga.equipo : equiposCaribe.value[1].equipo
+      }
+    }
   } catch (e) {
-    error.value = `No se pudo cargar portal_jugadores.json: ${e.message}`
+    error.value = `Error cargando datos del portal: ${e.message}`
   } finally {
     cargando.value = false
   }
 })
 
+// --- Computeds LVBP ---
 const equiposUnicos = computed(() => {
-  const set = new Set(jugadores.value.map((j) => j.equipo).filter(Boolean))
+  const set = new Set(jugadoresLvbp.value.map((j) => j.equipo).filter(Boolean))
   return Array.from(set).sort()
 })
 
-// Power Ranking por franquicia (Top 9 Bateadores + Top 8 Lanzadores)
-const rankingEquipos = computed(() => {
+const rankingEquiposLvbp = computed(() => {
   const mapa = {}
-  for (const j of jugadores.value) {
+  for (const j of jugadoresLvbp.value) {
     if (!j.equipo) continue
     if (!mapa[j.equipo]) mapa[j.equipo] = { equipo: j.equipo, bats: [], pits: [], anunciados: 0 }
     if (j.estado === 'Anunciado') mapa[j.equipo].anunciados++
@@ -78,7 +120,7 @@ const rankingEquipos = computed(() => {
 
 const jugadoresFiltrados = computed(() => {
   const q = busqueda.value.trim().toLowerCase()
-  return jugadores.value.filter((j) => {
+  return jugadoresLvbp.value.filter((j) => {
     if (filtroEquipo.value !== 'TODOS' && j.equipo !== filtroEquipo.value) return false
     if (filtroRol.value !== 'TODOS' && j.rol !== filtroRol.value) return false
     if (filtroEstado.value !== 'TODOS' && j.estado !== filtroEstado.value) return false
@@ -93,6 +135,57 @@ const jugadoresFiltrados = computed(() => {
   })
 })
 
+// --- Computeds Caribe ---
+const equiposCaribeFiltrados = computed(() => {
+  if (filtroLigaCaribe.value === 'TODAS') return equiposCaribe.value
+  return equiposCaribe.value.filter((e) => e.liga === filtroLigaCaribe.value)
+})
+
+const jugadoresCaribeFiltrados = computed(() => {
+  const q = busquedaCaribe.value.trim().toLowerCase()
+  return jugadoresCaribe.value
+    .filter((j) => {
+      if (filtroLigaCaribe.value !== 'TODAS' && j.liga !== filtroLigaCaribe.value) return false
+      if (filtroEquipoCaribe.value !== 'TODOS' && j.equipo !== filtroEquipoCaribe.value) return false
+      if (filtroRolCaribe.value !== 'TODOS' && j.rol !== filtroRolCaribe.value) return false
+      if (soloMuestraCaribe.value) {
+        const vol = j.rol === 'Lanzador' ? j.bf_4y : j.pa_4y
+        if (vol < 100) return false
+      }
+      if (q && !j.nombre.toLowerCase().includes(q) && !j.equipo.toLowerCase().includes(q)) {
+        return false
+      }
+      return true
+    })
+    .slice(0, 200)
+})
+
+// Simulador Serie del Caribe (Neutral PF = 1.00, sin ventaja local)
+const resultadoSimulacion = computed(() => {
+  const eqA = equiposCaribe.value.find((e) => e.equipo === simEquipoA.value)
+  const eqB = equiposCaribe.value.find((e) => e.equipo === simEquipoB.value)
+  if (!eqA || !eqB) return null
+
+  // Modelo logistico calibrado (Ticket #34)
+  const z = 0.0391 * (eqA.p_bat - eqB.p_bat) + 0.0189 * (eqA.p_pit - eqB.p_pit)
+  const probA = 1 / (1 + Math.exp(-z))
+  const probB = 1 - probA
+
+  // Carreras esperadas xR en terreno neutral (Ticket #36)
+  const xrA = Math.exp(1.5665 + 0.0178 * (eqA.p_bat - 55) - 0.0165 * (eqB.p_pit - 55))
+  const xrB = Math.exp(1.5665 + 0.0178 * (eqB.p_bat - 55) - 0.0165 * (eqA.p_pit - 55))
+
+  return {
+    eqA,
+    eqB,
+    probA: (probA * 100).toFixed(1),
+    probB: (probB * 100).toFixed(1),
+    xrA: xrA.toFixed(1),
+    xrB: xrB.toFixed(1),
+    xrTotal: (xrA + xrB).toFixed(1),
+  }
+})
+
 function toggleExpandir(pid) {
   expandidoId.value = expandidoId.value === pid ? null : pid
 }
@@ -101,11 +194,25 @@ function seleccionarEquipo(eq) {
   filtroEquipo.value = filtroEquipo.value === eq ? 'TODOS' : eq
 }
 
+function seleccionarEquipoCaribe(eq) {
+  filtroEquipoCaribe.value = filtroEquipoCaribe.value === eq ? 'TODOS' : eq
+}
+
 function colorRating(val) {
   if (val >= 78) return 'bg-rose-500/20 text-rose-300 border-rose-500/40'
   if (val >= 66) return 'bg-amber-500/20 text-amber-300 border-amber-500/40'
   if (val >= 56) return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
   return 'bg-slate-800 text-slate-300 border-slate-700'
+}
+
+function badgeLiga(liga) {
+  const map = {
+    LVBP: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+    LIDOM: 'bg-blue-500/15 text-blue-300 border-blue-500/30',
+    LMP: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
+    LBPRC: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
+  }
+  return map[liga] || 'bg-slate-800 text-slate-300 border-slate-700'
 }
 
 function headshotUrl(pid) {
@@ -117,30 +224,48 @@ function headshotUrl(pid) {
   <div class="min-h-screen bg-slate-950 text-slate-100 font-sans">
     <!-- Header -->
     <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-20">
-      <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+      <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
           <div class="flex items-center gap-2.5">
             <span class="px-2 py-0.5 text-xs font-bold uppercase tracking-wider rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-              Tibumétrico LVBP
+              Tibumétrico Sabermetrics
             </span>
-            <span class="text-xs text-slate-400">Temporada {{ meta.season }}</span>
+            <span class="text-xs text-slate-400">Temporada {{ metaLvbp.season }}</span>
           </div>
           <h1 class="text-xl md:text-2xl font-bold tracking-tight text-white mt-1">
-            Power Ranking Multi-Liga &amp; Expediente de Jugadores
+            {{ vistaActiva === 'lvbp' ? 'LVBP · Power Ranking & Expedientes Multi-Liga' : 'Serie del Caribe · Ranking Unificado (4 Ligas)' }}
           </h1>
         </div>
 
-        <div class="flex flex-wrap items-center gap-3 text-xs">
-          <div class="px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700">
-            <span class="text-slate-400">Activos:</span>
-            <strong class="text-emerald-400 ml-1">{{ meta.total_activos }}</strong>
+        <!-- Selector de Vista Principal -->
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="inline-flex rounded-xl bg-slate-950 p-1 border border-slate-800">
+            <button
+              @click="vistaActiva = 'lvbp'"
+              :class="[
+                'px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer',
+                vistaActiva === 'lvbp' ? 'bg-cyan-500 text-slate-950' : 'text-slate-400 hover:text-white',
+              ]"
+            >
+              LVBP ({{ metaLvbp.total_activos + metaLvbp.total_anunciados }})
+            </button>
+            <button
+              v-if="equiposCaribe.length > 0"
+              @click="vistaActiva = 'caribe'"
+              :class="[
+                'px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5',
+                vistaActiva === 'caribe' ? 'bg-cyan-500 text-slate-950' : 'text-slate-400 hover:text-white',
+              ]"
+            >
+              <span>Caribe · 4 Ligas</span>
+              <span class="px-1.5 py-0.2 text-[10px] rounded bg-slate-800 text-cyan-300">
+                {{ metaCaribe.total_equipos }} eq
+              </span>
+            </button>
           </div>
-          <div class="px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700">
-            <span class="text-slate-400">Anunciados:</span>
-            <strong class="text-amber-400 ml-1">{{ meta.total_anunciados }}</strong>
-          </div>
-          <div class="px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700 text-slate-300">
-            Corte: <strong>{{ meta.fecha_corte || 'Hoy' }}</strong>
+
+          <div class="px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700 text-xs text-slate-300">
+            Corte: <strong>{{ metaLvbp.fecha_corte || 'Hoy' }}</strong>
           </div>
         </div>
       </div>
@@ -148,19 +273,21 @@ function headshotUrl(pid) {
 
     <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
       <div v-if="cargando" class="text-center py-20 text-slate-400">
-        Cargando base multi-liga LVBP...
+        Cargando base multi-liga...
       </div>
 
       <div v-else-if="error" class="p-4 rounded-xl bg-rose-950/50 border border-rose-800 text-rose-200 text-sm">
         {{ error }}
       </div>
 
-      <template v-else>
-        <!-- Power Ranking por Franquicia -->
+      <!-- ========================================================= -->
+      <!-- VISTA 1: PORTAL LVBP                                      -->
+      <!-- ========================================================= -->
+      <template v-else-if="vistaActiva === 'lvbp'">
         <section>
           <div class="flex items-center justify-between mb-3">
             <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              Power Ranking por Franquicia (Top 9 Bateadores + Top 8 Lanzadores)
+              Power Ranking LVBP (Top 9 Bateadores + Top 8 Lanzadores)
             </h2>
             <button
               v-if="filtroEquipo !== 'TODOS'"
@@ -173,7 +300,7 @@ function headshotUrl(pid) {
 
           <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
             <button
-              v-for="(eq, idx) in rankingEquipos"
+              v-for="(eq, idx) in rankingEquiposLvbp"
               :key="eq.equipo"
               @click="seleccionarEquipo(eq.equipo)"
               :class="[
@@ -205,13 +332,13 @@ function headshotUrl(pid) {
           </div>
         </section>
 
-        <!-- Barra de Filtros -->
+        <!-- Barra de Filtros LVBP -->
         <section class="p-4 rounded-xl bg-slate-900 border border-slate-800 flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
           <div class="flex-1">
             <input
               v-model="busqueda"
               type="text"
-              placeholder="Buscar pelotero por nombre o equipo..."
+              placeholder="Buscar pelotero LVBP por nombre o equipo..."
               class="w-full px-3.5 py-2 rounded-lg bg-slate-950 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
             />
           </div>
@@ -260,7 +387,7 @@ function headshotUrl(pid) {
           </div>
         </section>
 
-        <!-- Tabla Principal -->
+        <!-- Tabla Principal LVBP -->
         <section class="rounded-xl bg-slate-900 border border-slate-800 overflow-hidden">
           <div class="px-4 py-2.5 border-b border-slate-800 flex items-center justify-between text-xs text-slate-400">
             <span>Mostrando <strong class="text-white">{{ jugadoresFiltrados.length }}</strong> peloteros</span>
@@ -279,7 +406,7 @@ function headshotUrl(pid) {
                   <th class="py-3 px-4 text-right">Power (0-100)</th>
                   <th class="py-3 px-4 text-right">Métrica Eq. LVBP</th>
                   <th class="py-3 px-4 text-right">Volumen 4a</th>
-                  <th class="py-3 px-4 text-right">JJ {{ meta.season }}</th>
+                  <th class="py-3 px-4 text-right">JJ {{ metaLvbp.season }}</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-800/80 text-sm">
@@ -343,7 +470,7 @@ function headshotUrl(pid) {
                     </td>
                   </tr>
 
-                  <!-- Ficha Expandida: Historial Temporada por Temporada -->
+                  <!-- Ficha Expandida -->
                   <tr v-if="expandidoId === j.player_id" class="bg-slate-950/95">
                     <td colspan="9" class="p-4 md:p-6 border-t border-slate-800">
                       <div class="space-y-5">
@@ -357,7 +484,6 @@ function headshotUrl(pid) {
                           </span>
                         </div>
 
-                        <!-- Historial de Bateo -->
                         <div v-if="j.historial_bateo && j.historial_bateo.length > 0">
                           <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
                             Historial Ofensivo por Temporada (Convencional + Sabermetría)
@@ -420,7 +546,6 @@ function headshotUrl(pid) {
                           </div>
                         </div>
 
-                        <!-- Historial de Pitcheo -->
                         <div v-if="j.historial_picheo && j.historial_picheo.length > 0">
                           <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
                             Historial de Pitcheo por Temporada (Convencional + Sabermetría)
@@ -482,6 +607,241 @@ function headshotUrl(pid) {
                     </td>
                   </tr>
                 </template>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </template>
+
+      <!-- ========================================================= -->
+      <!-- VISTA 2: POWER RANKING CARIBE (4 LIGAS + SIMULADOR)       -->
+      <!-- ========================================================= -->
+      <template v-else-if="vistaActiva === 'caribe'">
+        <!-- Simulador Serie del Caribe (Terreno Neutral) -->
+        <section v-if="resultadoSimulacion" class="p-5 rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-cyan-950/30 border border-slate-800">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-4">
+            <div>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-cyan-400">
+                Simulador Serie del Caribe · Terreno Neutral (PF 1.00)
+              </span>
+              <h2 class="text-base font-bold text-white">
+                Proyección de Duelo Interligas (Modelo Logístico + Poisson xR)
+              </h2>
+            </div>
+            <span class="text-xs text-slate-400">
+              {{ metaCaribe.total_jugadores }} peloteros activos en escala unificada
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-11 gap-4 items-center">
+            <!-- Equipo A -->
+            <div class="lg:col-span-4 space-y-2">
+              <select
+                v-model="simEquipoA"
+                class="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm font-semibold text-white focus:outline-none focus:border-cyan-400"
+              >
+                <option v-for="e in equiposCaribe" :key="e.equipo" :value="e.equipo">
+                  [{{ e.liga }}] {{ e.equipo }} ({{ e.power }})
+                </option>
+              </select>
+              <div class="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center justify-between">
+                <div>
+                  <div class="text-xs text-slate-400">Probabilidad Victoria</div>
+                  <div class="text-2xl font-black text-cyan-300">{{ resultadoSimulacion.probA }}%</div>
+                </div>
+                <div class="text-right">
+                  <div class="text-xs text-slate-400">Carreras xR</div>
+                  <div class="text-2xl font-black text-white">{{ resultadoSimulacion.xrA }}</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Centro VS -->
+            <div class="lg:col-span-3 text-center space-y-1">
+              <div class="inline-block px-3 py-1 rounded-full bg-slate-800 text-xs font-bold text-slate-300">
+                VS NEUTRAL
+              </div>
+              <div class="text-xs text-slate-400 pt-1">
+                Total Proyectado: <strong class="text-emerald-300">{{ resultadoSimulacion.xrTotal }} carreras</strong>
+              </div>
+              <div class="text-[11px] text-slate-500">
+                Bat {{ resultadoSimulacion.eqA.p_bat }} vs {{ resultadoSimulacion.eqB.p_bat }} ·
+                Pit {{ resultadoSimulacion.eqA.p_pit }} vs {{ resultadoSimulacion.eqB.p_pit }}
+              </div>
+            </div>
+
+            <!-- Equipo B -->
+            <div class="lg:col-span-4 space-y-2">
+              <select
+                v-model="simEquipoB"
+                class="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm font-semibold text-white focus:outline-none focus:border-cyan-400"
+              >
+                <option v-for="e in equiposCaribe" :key="e.equipo" :value="e.equipo">
+                  [{{ e.liga }}] {{ e.equipo }} ({{ e.power }})
+                </option>
+              </select>
+              <div class="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center justify-between">
+                <div>
+                  <div class="text-xs text-slate-400">Probabilidad Victoria</div>
+                  <div class="text-2xl font-black text-amber-300">{{ resultadoSimulacion.probB }}%</div>
+                </div>
+                <div class="text-right">
+                  <div class="text-xs text-slate-400">Carreras xR</div>
+                  <div class="text-2xl font-black text-white">{{ resultadoSimulacion.xrB }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Filtro de Ligas + Ranking Franquicias del Caribe -->
+        <section>
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <div class="inline-flex rounded-lg bg-slate-900 p-1 border border-slate-800 text-xs">
+              <button
+                v-for="lg in ['TODAS', 'LVBP', 'LIDOM', 'LMP', 'LBPRC']"
+                :key="lg"
+                @click="filtroLigaCaribe = lg; filtroEquipoCaribe = 'TODOS'"
+                :class="[
+                  'px-3 py-1 rounded-md font-bold transition cursor-pointer',
+                  filtroLigaCaribe === lg ? 'bg-cyan-500 text-slate-950' : 'text-slate-400 hover:text-white',
+                ]"
+              >
+                {{ lg }}
+              </button>
+            </div>
+
+            <button
+              v-if="filtroEquipoCaribe !== 'TODOS'"
+              @click="filtroEquipoCaribe = 'TODOS'"
+              class="text-xs text-cyan-400 hover:underline"
+            >
+              Limpiar filtro de equipo ({{ filtroEquipoCaribe }})
+            </button>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5">
+            <button
+              v-for="(eq, idx) in equiposCaribeFiltrados"
+              :key="eq.equipo"
+              @click="seleccionarEquipoCaribe(eq.equipo)"
+              :class="[
+                'text-left p-3 rounded-xl border transition cursor-pointer',
+                filtroEquipoCaribe === eq.equipo
+                  ? 'bg-cyan-950/50 border-cyan-400 ring-1 ring-cyan-400/50'
+                  : 'bg-slate-900 border-slate-800 hover:border-slate-700',
+              ]"
+            >
+              <div class="flex items-center justify-between text-xs">
+                <span class="font-bold text-slate-400">#{{ idx + 1 }}</span>
+                <span :class="['px-1.5 py-0.2 rounded text-[10px] font-bold border', badgeLiga(eq.liga)]">
+                  {{ eq.liga }}
+                </span>
+              </div>
+              <div class="font-semibold text-xs text-white truncate mt-1.5" :title="eq.equipo">
+                {{ eq.equipo }}
+              </div>
+              <div class="text-lg font-extrabold text-cyan-300 mt-1">
+                {{ eq.power.toFixed(1) }}
+              </div>
+              <div class="text-[11px] text-slate-400 mt-0.5">
+                Bat {{ eq.p_bat }} · Pit {{ eq.p_pit }}
+              </div>
+            </button>
+          </div>
+        </section>
+
+        <!-- Top Peloteros del Caribe -->
+        <section class="rounded-xl bg-slate-900 border border-slate-800 overflow-hidden">
+          <div class="p-4 border-b border-slate-800 flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+            <input
+              v-model="busquedaCaribe"
+              type="text"
+              placeholder="Buscar entre los 1,440 peloteros del Caribe..."
+              class="flex-1 px-3.5 py-2 rounded-lg bg-slate-950 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
+            />
+            <div class="flex flex-wrap items-center gap-2">
+              <div class="inline-flex rounded-lg bg-slate-950 p-1 border border-slate-800 text-xs">
+                <button
+                  v-for="r in ['TODOS', 'Bateador', 'Lanzador']"
+                  :key="r"
+                  @click="filtroRolCaribe = r"
+                  :class="[
+                    'px-2.5 py-1 rounded-md font-medium transition cursor-pointer',
+                    filtroRolCaribe === r ? 'bg-cyan-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white',
+                  ]"
+                >
+                  {{ r === 'TODOS' ? 'Todos' : r + 'es' }}
+                </button>
+              </div>
+              <label class="inline-flex items-center gap-2 text-xs text-slate-300 px-2 cursor-pointer select-none">
+                <input v-model="soloMuestraCaribe" type="checkbox" class="rounded accent-cyan-400" />
+                Mín. 100 PA/BF
+              </label>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-slate-800 text-[11px] uppercase tracking-wider text-slate-400 bg-slate-950/60">
+                  <th class="py-3 px-4 w-12">#</th>
+                  <th class="py-3 px-4">Pelotero</th>
+                  <th class="py-3 px-4">Liga</th>
+                  <th class="py-3 px-4">Equipo</th>
+                  <th class="py-3 px-4">Rol</th>
+                  <th class="py-3 px-4 text-right">Power (0-100)</th>
+                  <th class="py-3 px-4 text-right">Métrica Eq.</th>
+                  <th class="py-3 px-4 text-right">Volumen 4a</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-800/80 text-sm">
+                <tr
+                  v-for="(j, index) in jugadoresCaribeFiltrados"
+                  :key="`${j.liga}-${j.player_id}`"
+                  class="hover:bg-slate-800/40 transition"
+                >
+                  <td class="py-2.5 px-4 font-mono text-xs text-slate-500">{{ index + 1 }}</td>
+                  <td class="py-2.5 px-4">
+                    <div class="flex items-center gap-3">
+                      <img
+                        :src="headshotUrl(j.player_id)"
+                        :alt="j.nombre"
+                        class="w-8 h-8 rounded-full object-cover bg-slate-800 border border-slate-700 shrink-0"
+                        loading="lazy"
+                      />
+                      <span class="font-semibold text-white">{{ j.nombre }}</span>
+                    </div>
+                  </td>
+                  <td class="py-2.5 px-4">
+                    <span :class="['px-2 py-0.5 rounded text-[11px] font-bold border', badgeLiga(j.liga)]">
+                      {{ j.liga }}
+                    </span>
+                  </td>
+                  <td class="py-2.5 px-4 text-xs text-slate-300">{{ j.equipo }}</td>
+                  <td class="py-2.5 px-4 text-xs text-slate-400">{{ j.rol }}</td>
+                  <td class="py-2.5 px-4 text-right">
+                    <span
+                      :class="[
+                        'inline-block px-2.5 py-0.5 rounded-md font-mono font-bold text-sm border',
+                        colorRating(j.power_ranking),
+                      ]"
+                    >
+                      {{ j.power_ranking.toFixed(1) }}
+                    </span>
+                  </td>
+                  <td class="py-2.5 px-4 text-right font-mono text-xs text-slate-200">
+                    <template v-if="j.rol === 'Lanzador'">
+                      {{ j.kbb_eq >= 0 ? '+' : '' }}{{ j.kbb_eq.toFixed(2) }}% <span class="text-slate-500">K-BB%</span>
+                    </template>
+                    <template v-else>
+                      {{ j.ops_eq.toFixed(3) }} <span class="text-slate-500">OPS</span>
+                    </template>
+                  </td>
+                  <td class="py-2.5 px-4 text-right font-mono text-xs text-slate-400">
+                    {{ j.rol === 'Lanzador' ? `${j.bf_4y} BF` : `${j.pa_4y} PA` }}
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
