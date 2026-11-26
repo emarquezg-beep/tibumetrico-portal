@@ -6,7 +6,6 @@ import {
   NOTAS_BREVES,
 } from './data/articulos.js'
 
-// Navegación principal: 'editorial' | 'lvbp' | 'caribe'
 const vistaActiva = ref('editorial')
 const articuloAbierto = ref(null)
 
@@ -14,19 +13,22 @@ const cargando = ref(true)
 const error = ref(null)
 
 // Datos LVBP
-const metaLvbp = ref({ season: 2026, fecha_corte: '', total_activos: 0, total_anunciados: 0 })
+const metaLvbp = ref({ season: 2026, fecha_corte: '', total_activos: 0, total_anunciados: 0, total_importados: 0 })
 const jugadoresLvbp = ref([])
 
 // Datos Caribe
-const metaCaribe = ref({ season: 2026, total_equipos: 0, total_jugadores: 0 })
+const metaCaribe = ref({ season: 2026, total_equipos: 0, total_jugadores: 0, total_importados: 0 })
 const equiposCaribe = ref([])
 const jugadoresCaribe = ref([])
 
-// Filtros LVBP
+// Filtros y Ordenamiento LVBP
 const busqueda = ref('')
 const filtroEquipo = ref('TODOS')
 const filtroRol = ref('TODOS')
 const filtroEstado = ref('TODOS')
+const filtroOrigen = ref('TODOS') // 'TODOS' | 'IMPORTADOS' | 'NATIVOS'
+const ordenarPor = ref('power') // 'power' | 'wpa' | 'wpa_li'
+const ordenDir = ref('desc') // 'desc' (mejores) | 'asc' (peores)
 const soloMuestraMinima = ref(false)
 const expandidoId = ref(null)
 
@@ -35,6 +37,7 @@ const busquedaCaribe = ref('')
 const filtroLigaCaribe = ref('TODAS')
 const filtroEquipoCaribe = ref('TODOS')
 const filtroRolCaribe = ref('TODOS')
+const filtroOrigenCaribe = ref('TODOS') // 'TODOS' | 'IMPORTADOS' | 'NATIVOS'
 const soloMuestraCaribe = ref(true)
 const expandidoCaribeKey = ref(null)
 
@@ -56,6 +59,7 @@ onMounted(async () => {
       fecha_corte: dataLvbp.fecha_corte,
       total_activos: dataLvbp.total_activos,
       total_anunciados: dataLvbp.total_anunciados,
+      total_importados: dataLvbp.total_importados || 0,
     }
     jugadoresLvbp.value = dataLvbp.jugadores || []
 
@@ -65,6 +69,7 @@ onMounted(async () => {
         season: dataCaribe.season,
         total_equipos: dataCaribe.total_equipos,
         total_jugadores: dataCaribe.total_jugadores,
+        total_importados: dataCaribe.total_importados || 0,
       }
       equiposCaribe.value = dataCaribe.ranking_equipos || []
       jugadoresCaribe.value = dataCaribe.jugadores || []
@@ -275,16 +280,33 @@ const rankingEquiposLvbp = computed(() => {
 
 const jugadoresFiltrados = computed(() => {
   const q = busqueda.value.trim().toLowerCase()
-  return jugadoresLvbp.value.filter((j) => {
+  const lista = jugadoresLvbp.value.filter((j) => {
     if (filtroEquipo.value !== 'TODOS' && j.equipo !== filtroEquipo.value) return false
     if (filtroRol.value !== 'TODOS' && j.rol !== filtroRol.value) return false
     if (filtroEstado.value !== 'TODOS' && j.estado !== filtroEstado.value) return false
+    if (filtroOrigen.value === 'IMPORTADOS' && !j.es_importado) return false
+    if (filtroOrigen.value === 'NATIVOS' && j.es_importado) return false
     if (soloMuestraMinima.value) {
       const vol = j.rol === 'Lanzador' ? j.bf_4y : j.pa_4y
       if (vol < 100) return false
     }
     if (q && !j.nombre.toLowerCase().includes(q) && !j.equipo.toLowerCase().includes(q)) return false
     return true
+  })
+
+  const mult = ordenDir.value === 'desc' ? -1 : 1
+  return [...lista].sort((a, b) => {
+    let va = a.power_ranking
+    let vb = b.power_ranking
+    if (ordenarPor.value === 'wpa') {
+      va = a.wpa ?? 0
+      vb = b.wpa ?? 0
+    } else if (ordenarPor.value === 'wpa_li') {
+      va = a.wpa_li ?? 0
+      vb = b.wpa_li ?? 0
+    }
+    if (va !== vb) return (va - vb) * mult
+    return a.nombre.localeCompare(b.nombre)
   })
 })
 
@@ -301,6 +323,8 @@ const jugadoresCaribeFiltrados = computed(() => {
       if (filtroLigaCaribe.value !== 'TODAS' && j.liga !== filtroLigaCaribe.value) return false
       if (filtroEquipoCaribe.value !== 'TODOS' && j.equipo !== filtroEquipoCaribe.value) return false
       if (filtroRolCaribe.value !== 'TODOS' && j.rol !== filtroRolCaribe.value) return false
+      if (filtroOrigenCaribe.value === 'IMPORTADOS' && !j.es_importado) return false
+      if (filtroOrigenCaribe.value === 'NATIVOS' && j.es_importado) return false
       if (soloMuestraCaribe.value) {
         const vol = j.rol === 'Lanzador' ? j.bf_4y : j.pa_4y
         if (vol < 100) return false
@@ -360,12 +384,19 @@ function seleccionarEquipoCaribe(eq) {
   filtroEquipoCaribe.value = filtroEquipoCaribe.value === eq ? 'TODOS' : eq
 }
 
-// Paleta sobria editorial para ratings (Terracota elite, Azul Marino fuerte, Verde Bosque sólido, Neutro)
 function colorRating(val) {
   if (val >= 78) return 'bg-[#B84A39]/12 text-[#9A3425] border-[#B84A39]/35'
   if (val >= 66) return 'bg-[#1E3A5F]/12 text-[#1E3A5F] border-[#1E3A5F]/30'
   if (val >= 56) return 'bg-[#2E5A44]/12 text-[#234735] border-[#2E5A44]/30'
   return 'bg-[#F4F4F2] text-[#52525B] border-[#D4D4D8]'
+}
+
+function colorWpa(val) {
+  if (val == null || val === 0) return 'text-[#71717A]'
+  if (val >= 1.0) return 'text-[#234735] font-bold'
+  if (val > 0) return 'text-[#1E3A5F] font-semibold'
+  if (val <= -0.75) return 'text-[#9A3425] font-bold'
+  return 'text-[#B84A39]'
 }
 
 function badgeLiga(liga) {
@@ -385,12 +416,9 @@ function headshotUrl(pid) {
 
 <template>
   <div class="min-h-screen bg-[#F4F4F2] text-[#18181B] flex flex-col" style="font-family: 'Inter', sans-serif">
-    <!-- ========================================================= -->
-    <!-- CABECERA EDITORIAL MINIMALISTA                            -->
-    <!-- ========================================================= -->
+    <!-- CABECERA EDITORIAL MINIMALISTA -->
     <header class="border-b border-[#D4D4D8] bg-[#F4F4F2]/95 backdrop-blur sticky top-0 z-30">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <!-- Marca tipográfica estilo publicación suiza -->
         <button @click="cambiarVista('editorial')" class="text-left group cursor-pointer flex items-baseline gap-3">
           <span class="text-2xl font-black tracking-tighter text-[#161616] uppercase leading-none">
             TIBUMÉTRICO
@@ -400,7 +428,6 @@ function headshotUrl(pid) {
           </span>
         </button>
 
-        <!-- Navegación limpia -->
         <nav class="flex flex-wrap items-center gap-1 sm:gap-2">
           <button
             @click="cambiarVista('editorial')"
@@ -447,9 +474,6 @@ function headshotUrl(pid) {
       </div>
     </header>
 
-    <!-- ========================================================= -->
-    <!-- CONTENIDO PRINCIPAL                                       -->
-    <!-- ========================================================= -->
     <main class="flex-1">
       <div v-if="cargando" class="max-w-7xl mx-auto px-6 py-24 text-center text-sm text-[#52525B]">
         Sincronizando base sabermétrica multi-liga...
@@ -460,10 +484,9 @@ function headshotUrl(pid) {
       </div>
 
       <!-- ======================================================= -->
-      <!-- VISTA 1: PORTADA EDITORIAL (ESTILO MAS CONTEXT / FG)    -->
+      <!-- VISTA 1: PORTADA EDITORIAL                              -->
       <!-- ======================================================= -->
       <template v-else-if="vistaActiva === 'editorial'">
-        <!-- LECTOR DE ARTÍCULO COMPLETO (si el usuario hizo clic en una nota) -->
         <article v-if="articuloAbierto" class="max-w-4xl mx-auto px-4 sm:px-6 py-10">
           <button
             @click="articuloAbierto = null"
@@ -502,7 +525,6 @@ function headshotUrl(pid) {
               </template>
             </div>
 
-            <!-- Llamado a la acción hacia los datos vivos -->
             <div class="mt-10 pt-6 border-t border-[#E4E4E7] flex flex-wrap items-center justify-between gap-4">
               <span class="text-xs text-[#52525B]">Explora los números completos detrás de este análisis:</span>
               <div class="flex gap-2">
@@ -523,12 +545,10 @@ function headshotUrl(pid) {
           </div>
         </article>
 
-        <!-- PORTADA PRINCIPAL (HERO + RETÍCULA ASIMÉTRICA + FRANJA OSCURA) -->
         <div v-else>
-          <!-- 1. HERO EDITORIAL + TARJETA DE DATOS EN VIVO -->
+          <!-- HERO EDITORIAL + TOP 5 EN VIVO -->
           <section class="max-w-7xl mx-auto px-4 sm:px-6 pt-8 pb-12 border-b border-[#D4D4D8]">
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-              <!-- Columna Izquierda (7 cols): Artículo Principal -->
               <div class="lg:col-span-7 bg-white border border-[#E4E4E7] p-6 sm:p-10 flex flex-col justify-between">
                 <div>
                   <div class="flex items-center justify-between gap-2">
@@ -569,7 +589,6 @@ function headshotUrl(pid) {
                 </div>
               </div>
 
-              <!-- Columna Derecha (5 cols): Arte de Datos en Vivo (Top 5 Caribe) -->
               <div class="lg:col-span-5 bg-white border border-[#E4E4E7] p-6 sm:p-8 flex flex-col justify-between">
                 <div>
                   <div class="flex items-center justify-between border-b border-[#E4E4E7] pb-3">
@@ -593,7 +612,12 @@ function headshotUrl(pid) {
                           class="w-9 h-9 rounded-full object-cover bg-[#F4F4F2] border border-[#E4E4E7] shrink-0"
                         />
                         <div class="min-w-0">
-                          <div class="text-sm font-bold text-[#161616] truncate">{{ j.nombre }}</div>
+                          <div class="flex items-center gap-1.5">
+                            <span class="text-sm font-bold text-[#161616] truncate">{{ j.nombre }}</span>
+                            <span v-if="j.es_importado" class="px-1 py-0.2 bg-[#B84A39]/12 text-[#9A3425] border border-[#B84A39]/30 text-[9px] font-bold shrink-0">
+                              IMP
+                            </span>
+                          </div>
                           <div class="text-[11px] text-[#52525B] truncate">
                             <span class="font-semibold text-[#1E3A5F]">{{ j.liga }}</span> · {{ j.equipo }}
                           </div>
@@ -630,7 +654,7 @@ function headshotUrl(pid) {
             </div>
           </section>
 
-          <!-- 2. RETÍCULA ASIMÉTRICA (ESTILO MAS CONTEXT: NOTAS BREVES + ANÁLISIS) -->
+          <!-- RETÍCULA ASIMÉTRICA -->
           <section class="max-w-7xl mx-auto px-4 sm:px-6 py-12">
             <div class="flex items-center justify-between mb-6">
               <h2 class="text-xs font-bold uppercase tracking-[0.2em] text-[#52525B]">
@@ -640,7 +664,6 @@ function headshotUrl(pid) {
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-              <!-- Columna Izquierda (4 cols): 3 Notas Breves Apiladas -->
               <div class="lg:col-span-4 divide-y divide-[#D4D4D8] border-t border-b border-[#D4D4D8]">
                 <div v-for="nota in NOTAS_BREVES" :key="nota.id" class="py-5">
                   <div class="flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.16em] text-[#B84A39]">
@@ -656,7 +679,6 @@ function headshotUrl(pid) {
                 </div>
               </div>
 
-              <!-- Columnas Derecha (8 cols -> 2 tarjetas grandes de análisis con Arte de Datos) -->
               <div class="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <article
                   v-for="art in ARTICULOS_DESTACADOS"
@@ -665,7 +687,6 @@ function headshotUrl(pid) {
                   class="bg-white border border-[#E4E4E7] hover:border-[#161616] transition cursor-pointer flex flex-col justify-between group"
                 >
                   <div>
-                    <!-- Portada Tipográfica / Data Art minimalista -->
                     <div
                       :class="[
                         'p-6 border-b border-[#E4E4E7] flex flex-col justify-between h-44',
@@ -702,10 +723,9 @@ function headshotUrl(pid) {
             </div>
           </section>
 
-          <!-- 3. FRANJA OSCURA DE CONTRASTE (#161616) - ESCAPARATE CARIBE -->
+          <!-- FRANJA OSCURA DE CONTRASTE -->
           <section class="bg-[#161616] text-white py-14 border-t border-b border-[#27272A]">
             <div class="max-w-7xl mx-auto px-4 sm:px-6">
-              <!-- Declaración editorial estilo bloque negro de referencia -->
               <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 pb-12 border-b border-[#27272A]">
                 <div class="lg:col-span-6">
                   <h2 class="text-2xl sm:text-4xl font-black tracking-tight uppercase leading-none">
@@ -734,7 +754,6 @@ function headshotUrl(pid) {
                 </div>
               </div>
 
-              <!-- Top 6 Franquicias del Caribe (estilo portadas inferiores) -->
               <div class="pt-10">
                 <div class="flex items-center justify-between mb-6">
                   <span class="text-xs font-bold uppercase tracking-[0.2em] text-[#A1A1AA]">
@@ -780,7 +799,7 @@ function headshotUrl(pid) {
       </template>
 
       <!-- ======================================================= -->
-      <!-- VISTA 2: PORTAL LVBP (TABLAS CLARAS + EXPEDIENTES)       -->
+      <!-- VISTA 2: PORTAL LVBP (POWER + WPA + IMPORTADOS)         -->
       <!-- ======================================================= -->
       <template v-else-if="vistaActiva === 'lvbp'">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-6">
@@ -820,48 +839,108 @@ function headshotUrl(pid) {
             </div>
           </section>
 
-          <!-- Filtros LVBP -->
-          <section class="p-4 bg-white border border-[#E4E4E7] flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
-            <div class="flex-1">
-              <input
-                v-model="busqueda"
-                type="text"
-                placeholder="Buscar pelotero LVBP por nombre o equipo..."
-                class="w-full px-3.5 py-2 bg-[#F4F4F2] border border-[#D4D4D8] text-sm text-[#18181B] placeholder-[#71717A] focus:outline-none focus:border-[#161616]"
-              />
+          <!-- Filtros y Ordenamiento LVBP -->
+          <section class="p-4 bg-white border border-[#E4E4E7] space-y-3">
+            <div class="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
+              <div class="flex-1">
+                <input
+                  v-model="busqueda"
+                  type="text"
+                  placeholder="Buscar pelotero LVBP por nombre o equipo..."
+                  class="w-full px-3.5 py-2 bg-[#F4F4F2] border border-[#D4D4D8] text-sm text-[#18181B] placeholder-[#71717A] focus:outline-none focus:border-[#161616]"
+                />
+              </div>
+
+              <div class="flex flex-wrap items-center gap-2">
+                <select v-model="filtroEquipo" class="px-3 py-2 bg-[#F4F4F2] border border-[#D4D4D8] text-xs font-semibold text-[#18181B] focus:outline-none focus:border-[#161616]">
+                  <option value="TODOS">Todos los equipos</option>
+                  <option v-for="eq in equiposUnicos" :key="eq" :value="eq">{{ eq }}</option>
+                </select>
+
+                <!-- Filtro Origen: Todos / Importados / Nativos -->
+                <div class="inline-flex bg-[#F4F4F2] p-0.5 border border-[#D4D4D8] text-xs">
+                  <button
+                    @click="filtroOrigen = 'TODOS'"
+                    :class="['px-2.5 py-1 font-semibold transition cursor-pointer', filtroOrigen === 'TODOS' ? 'bg-[#161616] text-white' : 'text-[#52525B] hover:text-[#161616]']"
+                  >
+                    Todos
+                  </button>
+                  <button
+                    @click="filtroOrigen = 'IMPORTADOS'"
+                    :class="['px-2.5 py-1 font-bold transition cursor-pointer', filtroOrigen === 'IMPORTADOS' ? 'bg-[#B84A39] text-white' : 'text-[#9A3425] hover:bg-[#B84A39]/10']"
+                  >
+                    Importados ({{ metaLvbp.total_importados }})
+                  </button>
+                  <button
+                    @click="filtroOrigen = 'NATIVOS'"
+                    :class="['px-2.5 py-1 font-semibold transition cursor-pointer', filtroOrigen === 'NATIVOS' ? 'bg-[#161616] text-white' : 'text-[#52525B] hover:text-[#161616]']"
+                  >
+                    Criollos
+                  </button>
+                </div>
+
+                <!-- Filtro Rol -->
+                <div class="inline-flex bg-[#F4F4F2] p-0.5 border border-[#D4D4D8] text-xs">
+                  <button
+                    v-for="r in ['TODOS', 'Bateador', 'Lanzador']"
+                    :key="r"
+                    @click="filtroRol = r"
+                    :class="['px-2.5 py-1 font-semibold transition cursor-pointer', filtroRol === r ? 'bg-[#161616] text-white' : 'text-[#52525B] hover:text-[#161616]']"
+                  >
+                    {{ r === 'TODOS' ? 'Roles' : r + 'es' }}
+                  </button>
+                </div>
+
+                <!-- Filtro Estado -->
+                <div class="inline-flex bg-[#F4F4F2] p-0.5 border border-[#D4D4D8] text-xs">
+                  <button
+                    v-for="est in ['TODOS', 'Activo', 'Anunciado']"
+                    :key="est"
+                    @click="filtroEstado = est"
+                    :class="['px-2.5 py-1 font-semibold transition cursor-pointer', filtroEstado === est ? 'bg-[#1E3A5F] text-white' : 'text-[#52525B] hover:text-[#161616]']"
+                  >
+                    {{ est === 'TODOS' ? 'Estados' : est + 's' }}
+                  </button>
+                </div>
+              </div>
             </div>
 
-            <div class="flex flex-wrap items-center gap-2">
-              <select v-model="filtroEquipo" class="px-3 py-2 bg-[#F4F4F2] border border-[#D4D4D8] text-xs font-semibold text-[#18181B] focus:outline-none focus:border-[#161616]">
-                <option value="TODOS">Todos los equipos</option>
-                <option v-for="eq in equiposUnicos" :key="eq" :value="eq">{{ eq }}</option>
-              </select>
+            <!-- Segunda fila: Selector de Ordenamiento Dual (Power vs WPA) + Muestra -->
+            <div class="pt-3 border-t border-[#E4E4E7] flex flex-wrap items-center justify-between gap-3 text-xs">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="font-bold uppercase tracking-wider text-[10px] text-[#52525B]">Ordenar por:</span>
+                <div class="inline-flex bg-[#F4F4F2] p-0.5 border border-[#D4D4D8]">
+                  <button
+                    @click="ordenarPor = 'power'"
+                    :class="['px-2.5 py-1 font-bold transition cursor-pointer', ordenarPor === 'power' ? 'bg-[#1E3A5F] text-white' : 'text-[#52525B] hover:text-[#161616]']"
+                  >
+                    Power (0-100)
+                  </button>
+                  <button
+                    @click="ordenarPor = 'wpa'"
+                    :class="['px-2.5 py-1 font-bold transition cursor-pointer', ordenarPor === 'wpa' ? 'bg-[#1E3A5F] text-white' : 'text-[#52525B] hover:text-[#161616]']"
+                  >
+                    WPA {{ metaLvbp.season }}
+                  </button>
+                  <button
+                    @click="ordenarPor = 'wpa_li'"
+                    :class="['px-2.5 py-1 font-bold transition cursor-pointer', ordenarPor === 'wpa_li' ? 'bg-[#1E3A5F] text-white' : 'text-[#52525B] hover:text-[#161616]']"
+                  >
+                    WPA/LI
+                  </button>
+                </div>
 
-              <div class="inline-flex bg-[#F4F4F2] p-0.5 border border-[#D4D4D8] text-xs">
                 <button
-                  v-for="r in ['TODOS', 'Bateador', 'Lanzador']"
-                  :key="r"
-                  @click="filtroRol = r"
-                  :class="['px-2.5 py-1 font-semibold transition cursor-pointer', filtroRol === r ? 'bg-[#161616] text-white' : 'text-[#52525B] hover:text-[#161616]']"
+                  @click="ordenDir = ordenDir === 'desc' ? 'asc' : 'desc'"
+                  class="px-2.5 py-1 bg-[#F4F4F2] border border-[#D4D4D8] font-semibold text-[#161616] hover:border-[#161616] transition cursor-pointer"
                 >
-                  {{ r === 'TODOS' ? 'Todos' : r + 'es' }}
+                  {{ ordenDir === 'desc' ? '↓ Mejores primero' : '↑ Peores primero' }}
                 </button>
               </div>
 
-              <div class="inline-flex bg-[#F4F4F2] p-0.5 border border-[#D4D4D8] text-xs">
-                <button
-                  v-for="est in ['TODOS', 'Activo', 'Anunciado']"
-                  :key="est"
-                  @click="filtroEstado = est"
-                  :class="['px-2.5 py-1 font-semibold transition cursor-pointer', filtroEstado === est ? 'bg-[#1E3A5F] text-white' : 'text-[#52525B] hover:text-[#161616]']"
-                >
-                  {{ est === 'TODOS' ? 'Estados' : est + 's' }}
-                </button>
-              </div>
-
-              <label class="inline-flex items-center gap-2 text-xs font-medium text-[#52525B] px-2 cursor-pointer select-none">
+              <label class="inline-flex items-center gap-2 font-medium text-[#52525B] cursor-pointer select-none">
                 <input v-model="soloMuestraMinima" type="checkbox" class="accent-[#161616]" />
-                Mín. 100 PA/BF
+                Mín. 100 PA/BF (4 años)
               </label>
             </div>
           </section>
@@ -870,7 +949,7 @@ function headshotUrl(pid) {
           <section class="bg-white border border-[#E4E4E7] overflow-hidden">
             <div class="px-4 py-2.5 border-b border-[#E4E4E7] bg-[#FAFAFA] flex items-center justify-between text-xs text-[#52525B]">
               <span>Mostrando <strong class="text-[#161616]">{{ jugadoresFiltrados.length }}</strong> peloteros</span>
-              <span>Haz clic en un jugador para desplegar su expediente multi-liga</span>
+              <span>Clic en cualquier fila para desplegar historial multi-liga</span>
             </div>
 
             <div class="overflow-x-auto">
@@ -881,11 +960,18 @@ function headshotUrl(pid) {
                     <th class="py-3 px-4">Pelotero</th>
                     <th class="py-3 px-4">Equipo</th>
                     <th class="py-3 px-4">Rol</th>
-                    <th class="py-3 px-4">Estado</th>
-                    <th class="py-3 px-4 text-right">Power (0-100)</th>
-                    <th class="py-3 px-4 text-right">Métrica Eq. LVBP</th>
+                    <th class="py-3 px-4 text-right cursor-pointer hover:text-[#161616]" @click="ordenarPor = 'power'">
+                      Power {{ ordenarPor === 'power' ? (ordenDir === 'desc' ? '↓' : '↑') : '' }}
+                    </th>
+                    <th class="py-3 px-4 text-right cursor-pointer hover:text-[#161616]" @click="ordenarPor = 'wpa'">
+                      WPA {{ metaLvbp.season }} {{ ordenarPor === 'wpa' ? (ordenDir === 'desc' ? '↓' : '↑') : '' }}
+                    </th>
+                    <th class="py-3 px-4 text-right cursor-pointer hover:text-[#161616]" @click="ordenarPor = 'wpa_li'">
+                      WPA/LI {{ ordenarPor === 'wpa_li' ? (ordenDir === 'desc' ? '↓' : '↑') : '' }}
+                    </th>
+                    <th class="py-3 px-4 text-right">Métrica Eq.</th>
                     <th class="py-3 px-4 text-right">Volumen 4a</th>
-                    <th class="py-3 px-4 text-right">JJ {{ metaLvbp.season }}</th>
+                    <th class="py-3 px-4 text-right">JJ</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-[#E4E4E7] text-sm">
@@ -896,22 +982,38 @@ function headshotUrl(pid) {
                         <div class="flex items-center gap-3">
                           <img :src="headshotUrl(j.player_id)" :alt="j.nombre" class="w-9 h-9 rounded-full object-cover bg-[#F4F4F2] border border-[#E4E4E7] shrink-0" loading="lazy" />
                           <div>
-                            <div class="font-bold text-[#161616] leading-tight">{{ j.nombre }}</div>
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                              <span class="font-bold text-[#161616] leading-tight">{{ j.nombre }}</span>
+                              <span
+                                v-if="j.es_importado"
+                                :title="`Importado · ${j.pais_origen}`"
+                                class="px-1.5 py-0.2 bg-[#B84A39]/12 text-[#9A3425] border border-[#B84A39]/30 text-[9px] font-extrabold uppercase tracking-wider"
+                              >
+                                IMP · {{ j.pais_origen }}
+                              </span>
+                              <span
+                                v-if="j.estado === 'Anunciado'"
+                                class="px-1.5 py-0.2 bg-[#1E3A5F]/10 text-[#1E3A5F] border border-[#1E3A5F]/25 text-[9px] font-bold uppercase"
+                              >
+                                Anunciado
+                              </span>
+                            </div>
                             <div class="text-[11px] text-[#71717A] font-mono">ID {{ j.player_id }}</div>
                           </div>
                         </div>
                       </td>
                       <td class="py-3 px-4 text-xs font-medium text-[#3F3F46]">{{ j.equipo }}</td>
                       <td class="py-3 px-4 text-xs text-[#52525B]">{{ j.rol }}</td>
-                      <td class="py-3 px-4">
-                        <span :class="['px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border', j.estado === 'Activo' ? 'bg-[#2E5A44]/10 text-[#234735] border-[#2E5A44]/25' : 'bg-[#B84A39]/10 text-[#9A3425] border-[#B84A39]/25']">
-                          {{ j.estado }}
-                        </span>
-                      </td>
                       <td class="py-3 px-4 text-right">
                         <span :class="['inline-block px-2.5 py-0.5 font-mono font-bold text-xs border', colorRating(j.power_ranking)]">
                           {{ j.power_ranking.toFixed(1) }}
                         </span>
+                      </td>
+                      <td :class="['py-3 px-4 text-right font-mono text-xs', colorWpa(j.wpa)]">
+                        {{ j.wpa > 0 ? '+' : '' }}{{ (j.wpa ?? 0).toFixed(2) }}
+                      </td>
+                      <td :class="['py-3 px-4 text-right font-mono text-xs', colorWpa(j.wpa_li)]">
+                        {{ j.wpa_li > 0 ? '+' : '' }}{{ (j.wpa_li ?? 0).toFixed(2) }}
                       </td>
                       <td class="py-3 px-4 text-right font-mono text-xs text-[#18181B]">
                         <template v-if="j.rol === 'Lanzador'">
@@ -929,7 +1031,7 @@ function headshotUrl(pid) {
 
                     <!-- Ficha Expandida LVBP -->
                     <tr v-if="expandidoId === j.player_id" class="bg-[#FAFAFA]">
-                      <td colspan="9" class="p-4 md:p-6 border-t border-b border-[#D4D4D8]">
+                      <td colspan="10" class="p-4 md:p-6 border-t border-b border-[#D4D4D8]">
                         <div class="space-y-6">
                           <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#E4E4E7]">
                             <h3 class="text-sm font-extrabold uppercase tracking-wide text-[#161616]">
@@ -937,7 +1039,8 @@ function headshotUrl(pid) {
                             </h3>
                             <span class="text-xs font-mono text-[#52525B]">
                               Rating Bateo: <strong class="text-[#161616]">{{ j.rating_bateo }}</strong> ·
-                              Rating Pitcheo: <strong class="text-[#161616]">{{ j.rating_picheo }}</strong>
+                              Rating Pitcheo: <strong class="text-[#161616]">{{ j.rating_picheo }}</strong> ·
+                              pLI {{ metaLvbp.season }}: <strong class="text-[#161616]">{{ (j.pli ?? 0).toFixed(2) }}</strong>
                             </span>
                           </div>
 
@@ -1166,11 +1269,11 @@ function headshotUrl(pid) {
       </template>
 
       <!-- ======================================================= -->
-      <!-- VISTA 3: POWER RANKING CARIBE (4 LIGAS + SIMULADOR)     -->
+      <!-- VISTA 3: POWER RANKING CARIBE (4 LIGAS + IMPORTADOS)    -->
       <!-- ======================================================= -->
       <template v-else-if="vistaActiva === 'caribe'">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8">
-          <!-- Simulador Serie del Caribe (Bloque Oscuro Editorial) -->
+          <!-- Simulador Serie del Caribe -->
           <section v-if="resultadoSimulacion" class="p-6 sm:p-8 bg-[#161616] text-white border border-[#27272A]">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-6 pb-4 border-b border-[#27272A]">
               <div>
@@ -1277,9 +1380,9 @@ function headshotUrl(pid) {
             </div>
           </section>
 
-          <!-- Top Peloteros del Caribe -->
+          <!-- Top Peloteros del Caribe + Filtro Importados -->
           <section class="bg-white border border-[#E4E4E7] overflow-hidden">
-            <div class="p-4 border-b border-[#E4E4E7] flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+            <div class="p-4 border-b border-[#E4E4E7] flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
               <input
                 v-model="busquedaCaribe"
                 type="text"
@@ -1287,6 +1390,28 @@ function headshotUrl(pid) {
                 class="flex-1 px-3.5 py-2 bg-[#F4F4F2] border border-[#D4D4D8] text-sm text-[#18181B] placeholder-[#71717A] focus:outline-none focus:border-[#161616]"
               />
               <div class="flex flex-wrap items-center gap-2">
+                <!-- Filtro Importados Caribe -->
+                <div class="inline-flex bg-[#F4F4F2] p-0.5 border border-[#D4D4D8] text-xs">
+                  <button
+                    @click="filtroOrigenCaribe = 'TODOS'"
+                    :class="['px-2.5 py-1 font-semibold transition cursor-pointer', filtroOrigenCaribe === 'TODOS' ? 'bg-[#161616] text-white' : 'text-[#52525B] hover:text-[#161616]']"
+                  >
+                    Todos
+                  </button>
+                  <button
+                    @click="filtroOrigenCaribe = 'IMPORTADOS'"
+                    :class="['px-2.5 py-1 font-bold transition cursor-pointer', filtroOrigenCaribe === 'IMPORTADOS' ? 'bg-[#B84A39] text-white' : 'text-[#9A3425] hover:bg-[#B84A39]/10']"
+                  >
+                    Importados ({{ metaCaribe.total_importados }})
+                  </button>
+                  <button
+                    @click="filtroOrigenCaribe = 'NATIVOS'"
+                    :class="['px-2.5 py-1 font-semibold transition cursor-pointer', filtroOrigenCaribe === 'NATIVOS' ? 'bg-[#161616] text-white' : 'text-[#52525B] hover:text-[#161616]']"
+                  >
+                    Locales
+                  </button>
+                </div>
+
                 <div class="inline-flex bg-[#F4F4F2] p-0.5 border border-[#D4D4D8] text-xs">
                   <button
                     v-for="r in ['TODOS', 'Bateador', 'Lanzador']"
@@ -1294,9 +1419,10 @@ function headshotUrl(pid) {
                     @click="filtroRolCaribe = r"
                     :class="['px-2.5 py-1 font-semibold transition cursor-pointer', filtroRolCaribe === r ? 'bg-[#161616] text-white' : 'text-[#52525B] hover:text-[#161616]']"
                   >
-                    {{ r === 'TODOS' ? 'Todos' : r + 'es' }}
+                    {{ r === 'TODOS' ? 'Roles' : r + 'es' }}
                   </button>
                 </div>
+
                 <label class="inline-flex items-center gap-2 text-xs font-medium text-[#52525B] px-2 cursor-pointer select-none">
                   <input v-model="soloMuestraCaribe" type="checkbox" class="accent-[#161616]" />
                   Mín. 100 PA/BF
@@ -1325,7 +1451,16 @@ function headshotUrl(pid) {
                       <td class="py-2.5 px-4">
                         <div class="flex items-center gap-3">
                           <img :src="headshotUrl(j.player_id)" :alt="j.nombre" class="w-8 h-8 rounded-full object-cover bg-[#F4F4F2] border border-[#E4E4E7] shrink-0" loading="lazy" />
-                          <span class="font-bold text-[#161616]">{{ j.nombre }}</span>
+                          <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="font-bold text-[#161616]">{{ j.nombre }}</span>
+                            <span
+                              v-if="j.es_importado"
+                              :title="`Importado · ${j.pais_origen}`"
+                              class="px-1.5 py-0.2 bg-[#B84A39]/12 text-[#9A3425] border border-[#B84A39]/30 text-[9px] font-extrabold uppercase tracking-wider"
+                            >
+                              IMP · {{ j.pais_origen }}
+                            </span>
+                          </div>
                         </div>
                       </td>
                       <td class="py-2.5 px-4">
@@ -1351,7 +1486,7 @@ function headshotUrl(pid) {
                       </td>
                     </tr>
 
-                    <!-- Ficha Expandida Caribe (idéntica en estructura y totales a LVBP) -->
+                    <!-- Ficha Expandida Caribe -->
                     <tr v-if="expandidoCaribeKey === `${j.liga}-${j.player_id}`" class="bg-[#FAFAFA]">
                       <td colspan="8" class="p-4 md:p-6 border-t border-b border-[#D4D4D8]">
                         <div class="space-y-6">
@@ -1588,9 +1723,7 @@ function headshotUrl(pid) {
       </template>
     </main>
 
-    <!-- ========================================================= -->
-    <!-- FOOTER EDITORIAL OSCURO (#161616)                         -->
-    <!-- ========================================================= -->
+    <!-- FOOTER EDITORIAL -->
     <footer class="bg-[#161616] text-[#A1A1AA] border-t border-[#27272A] mt-16">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 py-10 grid grid-cols-1 md:grid-cols-3 gap-8 text-xs">
         <div>
