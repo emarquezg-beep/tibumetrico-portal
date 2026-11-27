@@ -766,7 +766,7 @@ function headshotUrl(pid) {
                     DOCUMENTACIÓN BASE
                   </span>
                   <h2 class="text-xs font-extrabold uppercase tracking-[0.2em] text-[#161616]">
-                    Gu?as Metodol?gicas Fijadas
+                    Guías Metodológicas Fijadas
                   </h2>
                 </div>
                 <span class="text-[11px] text-[#52525B]">
