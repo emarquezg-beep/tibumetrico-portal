@@ -16,23 +16,23 @@ const enlaceCopiado = ref(false)
 function actualizarMetaSeo() {
   if (typeof document === 'undefined') return
   const base = window.location.origin
-  let title = 'TIBUM?TRICO ? Sabermetr?a LVBP & Serie del Caribe'
-  let desc = 'Plataforma independiente de anal?tica saberm?trica para la LVBP y las ligas invernales del Caribe: Power Ranking 0-100, WPA, importados y simulador interligas.'
+  let title = 'TIBUMÉTRICO · Sabermetría LVBP & Serie del Caribe'
+  let desc = 'Plataforma independiente de analítica sabermétrica para la LVBP y las ligas invernales del Caribe: Power Ranking 0-100, WPA, importados y simulador interligas.'
   let path = '/'
   let tipoOg = 'website'
 
   if (vistaActiva.value === 'editorial' && articuloAbierto.value) {
     const art = articuloAbierto.value
-    title = `${art.titulo} ? TIBUM?TRICO`
+    title = `${art.titulo} ? TIBUMÉTRICO`
     desc = art.seoDescription || art.bajada
     path = `/articulo/${art.slug}`
     tipoOg = 'article'
   } else if (vistaActiva.value === 'lvbp') {
-    title = 'Power Ranking LVBP, WPA 2026 & Importados ? TIBUM?TRICO'
-    desc = 'Tabla saberm?trica completa de la LVBP: Power Ranking 0-100, WPA acumulado, WPA/LI, filtro de importados y expedientes multi-liga.'
+    title = 'Power Ranking LVBP, WPA 2026 & Importados ? TIBUMÉTRICO'
+    desc = 'Tabla sabermétrica completa de la LVBP: Power Ranking 0-100, WPA acumulado, WPA/LI, filtro de importados y expedientes multi-liga.'
     path = '/lvbp'
   } else if (vistaActiva.value === 'caribe') {
-    title = 'Power Ranking Serie del Caribe (4 Ligas) & Simulador ? TIBUM?TRICO'
+    title = 'Power Ranking Serie del Caribe (4 Ligas) & Simulador ? TIBUMÉTRICO'
     desc = 'Ranking unificado de las 32 franquicias de LVBP, LIDOM, LMP y LBPRC bajo una misma escala y simulador de duelos interligas.'
     path = '/caribe'
   }
@@ -757,20 +757,20 @@ function headshotUrl(pid) {
           </section>
 
           <!-- RETÍCULA ASIMÉTRICA -->
-          <!-- PILARES METODOL?GICOS FIJADOS (POWER RANKING ? WPA ? oWAR/fWAR) -->
+          <!-- PILARES METODOLÓGICOS FIJADOS (POWER RANKING ? WPA ? oWAR/fWAR) -->
           <section class="bg-white border-b border-[#D4D4D8] py-10">
             <div class="max-w-7xl mx-auto px-4 sm:px-6">
               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
                 <div class="flex items-center gap-2.5">
                   <span class="px-2 py-0.5 bg-[#161616] text-white text-[10px] font-mono font-bold uppercase tracking-widest">
-                    DOCUMENTACI?N BASE
+                    DOCUMENTACIÓN BASE
                   </span>
                   <h2 class="text-xs font-extrabold uppercase tracking-[0.2em] text-[#161616]">
                     Gu?as Metodol?gicas Fijadas
                   </h2>
                 </div>
                 <span class="text-[11px] text-[#52525B]">
-                  Los tres motores matem?ticos detr?s de los ?ndices de Tibum?trico
+                  Los tres motores matemáticos detrás de los índices de Tibumétrico
                 </span>
               </div>
 
@@ -803,7 +803,7 @@ function headshotUrl(pid) {
                     <div class="mt-6 pt-3.5 border-t border-[#D4D4D8] flex items-center justify-between text-xs">
                       <span class="font-mono text-[11px] text-[#52525B]">{{ pilar.lectura }}</span>
                       <span class="font-bold text-[#1E3A5F] uppercase tracking-wider group-hover:translate-x-0.5 transition">
-                        Leer gu?a completa ?
+                        Leer guía completa →
                       </span>
                     </div>
                   </article>
