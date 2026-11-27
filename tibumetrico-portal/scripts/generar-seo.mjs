@@ -5,7 +5,7 @@ import { TODOS_LOS_ARTICULOS } from '../src/data/articulos.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const DIST_DIR = path.resolve(__dirname, '../dist')
-const SITE_URL = process.env.SITE_URL || 'https://tibumetrico-portal.vercel.app'
+const SITE_URL = process.env.SITE_URL || 'https://tibumetrico.com'
 
 const baseHtml = fs.readFileSync(path.join(DIST_DIR, 'index.html'), 'utf-8')
 
