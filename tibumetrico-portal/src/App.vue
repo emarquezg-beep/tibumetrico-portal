@@ -4,10 +4,95 @@ import {
   ARTICULO_PRINCIPAL,
   ARTICULOS_DESTACADOS,
   NOTAS_BREVES,
+  buscarArticuloPorSlug,
 } from './data/articulos.js'
 
 const vistaActiva = ref('editorial')
 const articuloAbierto = ref(null)
+
+const enlaceCopiado = ref(false)
+
+function actualizarMetaSeo() {
+  if (typeof document === 'undefined') return
+  const base = window.location.origin
+  let title = 'TIBUM?TRICO ? Sabermetr?a LVBP & Serie del Caribe'
+  let desc = 'Plataforma independiente de anal?tica saberm?trica para la LVBP y las ligas invernales del Caribe: Power Ranking 0-100, WPA, importados y simulador interligas.'
+  let path = '/'
+  let tipoOg = 'website'
+
+  if (vistaActiva.value === 'editorial' && articuloAbierto.value) {
+    const art = articuloAbierto.value
+    title = `${art.titulo} ? TIBUM?TRICO`
+    desc = art.seoDescription || art.bajada
+    path = `/articulo/${art.slug}`
+    tipoOg = 'article'
+  } else if (vistaActiva.value === 'lvbp') {
+    title = 'Power Ranking LVBP, WPA 2026 & Importados ? TIBUM?TRICO'
+    desc = 'Tabla saberm?trica completa de la LVBP: Power Ranking 0-100, WPA acumulado, WPA/LI, filtro de importados y expedientes multi-liga.'
+    path = '/lvbp'
+  } else if (vistaActiva.value === 'caribe') {
+    title = 'Power Ranking Serie del Caribe (4 Ligas) & Simulador ? TIBUM?TRICO'
+    desc = 'Ranking unificado de las 32 franquicias de LVBP, LIDOM, LMP y LBPRC bajo una misma escala y simulador de duelos interligas.'
+    path = '/caribe'
+  }
+
+  const canonicalUrl = `${base}${path}`
+  document.title = title
+
+  const setMeta = (selector, attr, val) => {
+    let el = document.querySelector(selector)
+    if (!el) {
+      el = document.createElement('meta')
+      const [k, v] = attr
+      el.setAttribute(k, v)
+      document.head.appendChild(el)
+    }
+    el.setAttribute('content', val)
+  }
+
+  setMeta('meta[name="description"]', ['name', 'description'], desc)
+  setMeta('meta[property="og:type"]', ['property', 'og:type'], tipoOg)
+  setMeta('meta[property="og:title"]', ['property', 'og:title'], title)
+  setMeta('meta[property="og:description"]', ['property', 'og:description'], desc)
+  setMeta('meta[property="og:url"]', ['property', 'og:url'], canonicalUrl)
+  setMeta('meta[name="twitter:title"]', ['name', 'twitter:title'], title)
+  setMeta('meta[name="twitter:description"]', ['name', 'twitter:description'], desc)
+
+  let linkCan = document.querySelector('link[rel="canonical"]')
+  if (!linkCan) {
+    linkCan = document.createElement('link')
+    linkCan.setAttribute('rel', 'canonical')
+    document.head.appendChild(linkCan)
+  }
+  linkCan.setAttribute('href', canonicalUrl)
+}
+
+function sincronizarDesdeUrl() {
+  const path = window.location.pathname.replace(/\/+$/, '') || '/'
+  if (path.startsWith('/articulo/')) {
+    const slug = decodeURIComponent(path.replace('/articulo/', ''))
+    const encontrado = buscarArticuloPorSlug(slug)
+    vistaActiva.value = 'editorial'
+    articuloAbierto.value = encontrado
+  } else if (path === '/lvbp') {
+    vistaActiva.value = 'lvbp'
+    articuloAbierto.value = null
+  } else if (path === '/caribe') {
+    vistaActiva.value = 'caribe'
+    articuloAbierto.value = null
+  } else {
+    vistaActiva.value = 'editorial'
+    articuloAbierto.value = null
+  }
+  actualizarMetaSeo()
+}
+
+function copiarEnlaceArticulo(art) {
+  const url = `${window.location.origin}/articulo/${art.slug}`
+  navigator.clipboard?.writeText(url)
+  enlaceCopiado.value = true
+  setTimeout(() => { enlaceCopiado.value = false }, 2500)
+}
 
 const cargando = ref(true)
 const error = ref(null)
@@ -46,6 +131,8 @@ const simEquipoA = ref('')
 const simEquipoB = ref('')
 
 onMounted(async () => {
+  sincronizarDesdeUrl()
+  window.addEventListener('popstate', sincronizarDesdeUrl)
   try {
     const [resLvbp, resCaribe] = await Promise.all([
       fetch('/data/portal_jugadores.json', { cache: 'no-store' }),
@@ -360,11 +447,22 @@ const resultadoSimulacion = computed(() => {
 function cambiarVista(vista) {
   vistaActiva.value = vista
   articuloAbierto.value = null
+  const nuevaRuta = vista === 'editorial' ? '/' : `/${vista}`
+  if (window.location.pathname !== nuevaRuta) {
+    window.history.pushState({}, '', nuevaRuta)
+  }
+  actualizarMetaSeo()
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 function abrirArticulo(art) {
+  vistaActiva.value = 'editorial'
   articuloAbierto.value = art
+  const nuevaRuta = `/articulo/${art.slug}`
+  if (window.location.pathname !== nuevaRuta) {
+    window.history.pushState({}, '', nuevaRuta)
+  }
+  actualizarMetaSeo()
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
@@ -558,11 +656,14 @@ function headshotUrl(pid) {
                     <span class="text-xs text-[#52525B]">{{ ARTICULO_PRINCIPAL.fecha }}</span>
                   </div>
 
-                  <h1
-                    @click="abrirArticulo(ARTICULO_PRINCIPAL)"
-                    class="text-2xl sm:text-4xl font-extrabold tracking-tight text-[#161616] mt-4 leading-[1.12] hover:text-[#1E3A5F] transition cursor-pointer"
-                  >
-                    {{ ARTICULO_PRINCIPAL.titulo }}
+                  <h1 class="text-2xl sm:text-4xl font-extrabold tracking-tight text-[#161616] mt-4 leading-[1.12]">
+                    <a
+                      :href="`/articulo/${ARTICULO_PRINCIPAL.slug}`"
+                      @click.prevent="abrirArticulo(ARTICULO_PRINCIPAL)"
+                      class="hover:text-[#1E3A5F] transition"
+                    >
+                      {{ ARTICULO_PRINCIPAL.titulo }}
+                    </a>
                   </h1>
 
                   <p class="text-sm sm:text-base text-[#52525B] mt-4 leading-relaxed">
@@ -706,7 +807,9 @@ function headshotUrl(pid) {
                         {{ art.categoria }}
                       </div>
                       <h3 class="text-lg font-extrabold text-[#161616] mt-2 leading-snug group-hover:text-[#1E3A5F] transition">
-                        {{ art.titulo }}
+                        <a :href="`/articulo/${art.slug}`" @click.prevent="abrirArticulo(art)">
+                          {{ art.titulo }}
+                        </a>
                       </h3>
                       <p class="text-xs text-[#52525B] mt-2.5 leading-relaxed">
                         {{ art.bajada }}

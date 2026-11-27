@@ -1,0 +1,10 @@
+{
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "rewrites": [
+    { "source": "/articulo/:slug", "destination": "/articulo/:slug/index.html" },
+    { "source": "/lvbp", "destination": "/lvbp/index.html" },
+    { "source": "/caribe", "destination": "/caribe/index.html" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

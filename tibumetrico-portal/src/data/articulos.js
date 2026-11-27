@@ -1,15 +1,20 @@
 export const ARTICULO_PRINCIPAL = {
   id: 'paradoja-bravos-margarita-2026',
+  slug: 'paradoja-bravos-margarita-2026',
   categoria: 'INVESTIGACIÓN · POWER RANKING VS. REALIDAD',
   fecha: '26 Noviembre 2026',
+  fechaISO: '2026-11-26',
   autor: 'Ernesto Márquez · Tibumétrico Research',
   lectura: '6 min de lectura',
   titulo: 'La paradoja de Bravos de Margarita: por qué un roster Top 4 del Caribe marcha último en la LVBP',
+  seoDescription:
+    'Análisis sabermétrico de Bravos de Margarita en la LVBP 2026-27: récord Pitagórico (13.8-20.2), WHIP colectivo de 1.71 y el impacto negativo de -3.23 WPA.',
+  keywords: 'Bravos de Margarita, LVBP 2026, Power Ranking Caribe, sabermetría, WPA, FIP, Tibumétrico',
   bajada:
     'Nuestro modelo unificado ubica a Margarita como la cuarta plantilla más talentosa de las cuatro ligas invernales, pero su récord de 13-21 los tiene en el sótano. Cruzamos Pitágoras, FIP y WPA para explicar la brecha entre el papel y el terreno.',
   datoDestacado: {
     cifra: '-3.23 WPA',
-    etiqueta: 'Victoras restadas entre solo cuatro piezas de uso constante (Núñez, Idrogo, Hernández y Herrera)',
+    etiqueta: 'Victorias restadas entre solo cuatro piezas de uso constante (Núñez, Idrogo, Hernández y Herrera)',
   },
   contenido: [
     {
@@ -78,11 +83,16 @@ export const ARTICULO_PRINCIPAL = {
 export const ARTICULOS_DESTACADOS = [
   {
     id: 'brazos-mlb-dominan-caribe-2026',
+    slug: 'brazos-mlb-dominan-caribe-2026',
     categoria: 'POWER RANKING · SERIE DEL CARIBE',
     fecha: '26 Noviembre 2026',
+    fechaISO: '2026-11-26',
     autor: 'Ernesto Márquez · Tibumétrico Research',
     lectura: '5 min',
     titulo: 'Por qué los brazos de MLB dominan el Caribe: lo que revela el Power Ranking de 1,440 peloteros',
+    seoDescription:
+      'Nueve de los diez mejores peloteros del Caribe son lanzadores con experiencia en Grandes Ligas. Así funciona la normalización entre LVBP, LIDOM, LMP y LBPRC.',
+    keywords: 'Serie del Caribe, Power Ranking, Joe Jiménez, Renato Núñez, LVBP, LIDOM, LMP, LBPRC',
     bajada:
       'Al normalizar el historial completo desde Clase A hasta Grandes Ligas en una escala única de 0 a 100, el pitcheo con experiencia en MLB acapara 9 de los 10 primeros puestos.',
     metricaArte: {
@@ -118,11 +128,16 @@ export const ARTICULOS_DESTACADOS = [
   },
   {
     id: 'sesgo-muestra-pequena-prospectos',
+    slug: 'sesgo-muestra-pequena-prospectos',
     categoria: 'METODOLOGÍA · CALIBRACIÓN',
     fecha: '26 Noviembre 2026',
+    fechaISO: '2026-11-26',
     autor: 'Tibumétrico Lab',
     lectura: '4 min',
     titulo: 'El caso Jadher Areinamo: cómo el historial completo de Ligas Menores corrige el sesgo de Novato del Año',
+    seoDescription:
+      'Cómo evitar el sesgo de muestra pequeña en prospectos de la LVBP integrando más de 1,500 turnos de Ligas Menores (MiLB) mediante factores de traducción.',
+    keywords: 'Jadher Areinamo, Tiburones de La Guaira, Ligas Menores, sabermetría LVBP, traducción MiLB',
     bajada:
       'Sin sus más de 1,500 turnos en Clase A y Doble-A, el modelo lo ubicaba en el Top 10 de la liga. Al integrar todo su recorrido profesional, su proyección se ajusta a su nivel real.',
     metricaArte: {
@@ -171,3 +186,9 @@ export const NOTAS_BREVES = [
       'Cuatro franquicias dominicanas superan los 69.5 puntos colectivos en pitcheo, confirmando el perfil de bajo carreraje de la liga.',
   },
 ]
+
+export const TODOS_LOS_ARTICULOS = [ARTICULO_PRINCIPAL, ...ARTICULOS_DESTACADOS]
+
+export function buscarArticuloPorSlug(slug) {
+  return TODOS_LOS_ARTICULOS.find((a) => a.slug === slug || a.id === slug) || null
+}

@@ -1,11 +1,11 @@
-{
+﻿{
   "name": "tibumetrico-portal",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/generar-seo.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -18,3 +18,4 @@
     "vite": "^8.3.6"
   }
 }
+
