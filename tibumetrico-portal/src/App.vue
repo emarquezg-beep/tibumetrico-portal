@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import {
+  ARTICULOS_FIJADOS,
   ARTICULO_PRINCIPAL,
   ARTICULOS_DESTACADOS,
   NOTAS_BREVES,

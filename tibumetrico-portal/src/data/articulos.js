@@ -1,3 +1,119 @@
+export const ARTICULOS_FIJADOS = [
+  {
+    id: 'como-funciona-power-ranking-tibumetrico',
+    slug: 'como-funciona-power-ranking-tibumetrico',
+    numero: '01',
+    estadoBadge: 'FIJADO · METODOLOGÍA ACTIVA',
+    publicado: true,
+    categoria: 'METODOLOGÍA · MOTOR DE TALENTO',
+    fecha: '27 Noviembre 2026',
+    fechaISO: '2026-11-27',
+    autor: 'Ernesto Márquez · Tibumétrico Research',
+    lectura: '8 min de lectura',
+    titulo: 'Cómo funciona el Power Ranking de Tibumétrico: traducción multi-liga, regresión bayesiana y escala 0–100',
+    seoDescription:
+      'Explicación técnica completa del Power Ranking 0-100 de Tibumétrico: integración de MLB, MiLB, LMBP y ligas del Caribe, factores de traducción empíricos, decaimiento de 4 años y validación histórica en 4,807 juegos.',
+    keywords:
+      'Power Ranking LVBP, metodología sabermétrica, escala 0-100, traducción MiLB, regresión bayesiana, Serie del Caribe, Tibumétrico',
+    bajada:
+      'Por qué una actuación en Doble-A o en la LMBP no vale lo mismo que en la LVBP, cómo evitamos el sesgo de muestra pequeña con regresión bayesiana y cómo validamos el modelo sobre 20 temporadas de béisbol.',
+    datoDestacado: {
+      cifra: '4,807 juegos',
+      etiqueta: 'Muestra histórica de validación (2006–2026) con 56.04% de acierto fuera de muestra',
+    },
+    contenido: [
+      {
+        tipo: 'parrafo',
+        texto:
+          'Evaluar el talento real en las ligas invernales del Caribe presenta un desafío estructural que no existe en Grandes Ligas: los rosters cambian cada semana, los importados llegan con historiales en circuitos muy distintos entre sí y las temporadas regulares apenas duran entre 56 y 68 juegos. Si ordenáramos a los peloteros únicamente por su línea ofensiva o efectividad del mes en curso, el ruido estadístico dominaría cada conclusión. El Power Ranking de Tibumétrico nace para resolver ese problema midiendo capacidad intrínseca bajo una sola regla.',
+      },
+      {
+        tipo: 'subtitulo',
+        texto: '1. Ingesta multi-liga: el expediente completo de cada pelotero',
+      },
+      {
+        tipo: 'parrafo',
+        texto:
+          'Antes de asignar un puntaje, nuestro motor reconstruye los últimos cuatro años calendario de actividad oficial de cada jugador a partir de tres fuentes unificadas por identificador oficial: (1) Grandes Ligas y todo el sistema de Ligas Menores (Triple-A, Doble-A, Clase A+, Clase A y Rookie) mediante el endpoint yearByYear multi-liga de MLB; (2) la Liga Mayor de Béisbol Profesional (LMBP) de verano en Venezuela; y (3) las cuatro ligas invernales afiliadas a la Confederación del Caribe (LVBP, LIDOM, LMP y LBPRC).',
+      },
+      {
+        tipo: 'subtitulo',
+        texto: '2. Puentes empíricos de traducción entre circuitos',
+      },
+      {
+        tipo: 'parrafo',
+        texto:
+          'Un OPS de .850 en Clase A o un K-BB% de 18% en Doble-A no se trasladan de forma lineal al béisbol invernal. Para poner todas las ligas en la misma moneda, calibramos factores empíricos comparando el rendimiento de los mismos peloteros dentro del mismo año calendario entre su liga de origen y la LVBP. En ofensiva, el OPS equivalente se ajusta según el nivel competitivo (por ejemplo, factor 1.155 desde MLB hacia LVBP, 0.970 desde LMBP, 0.860 en Doble-A, 0.760 en Clase A+ y 0.680 en Clase A). En pitcheo, utilizamos la tasa pura de ponches menos boletos (K-BB%), aplicando diferenciales empíricos de traslado (-0.10 puntos porcentuales desde Triple-A, -2.66 desde LMBP y -6.14 desde Doble-A).',
+      },
+      {
+        tipo: 'cita',
+        texto:
+          '«En el pitcheo invernal, K-BB% predice el rendimiento futuro con mucha mayor estabilidad que la efectividad (ERA), porque aísla el dominio real del lanzador sobre la defensa y la suerte con bolas puestas en juego.»',
+      },
+      {
+        tipo: 'subtitulo',
+        texto: '3. Decaimiento temporal de 4 años y estabilización bayesiana',
+      },
+      {
+        tipo: 'parrafo',
+        texto:
+          'No todas las temporadas pesan igual: el rendimiento reciente refleja mejor el estado físico y técnico actual del pelotero. Por ello aplicamos una ponderación exponencial sobre los últimos cuatro años calendario con pesos de 1.00 (año en curso), 0.65 (año -1), 0.35 (año -2) y 0.18 (año -3). Posteriormente, para proteger el modelo contra rachas cortas de 20 o 30 turnos, aplicamos regresión bayesiana hacia la media de la liga: añadimos 130 apariciones al plato (PA) ficticias con un OPS equivalente de .735 en bateadores, y 125 bateadores enfrentados (BF) con un K-BB% de +5.50% en lanzadores. A medida que el jugador acumula volumen real, su propio desempeño desplaza por completo el ancla inicial.',
+      },
+      {
+        tipo: 'subtitulo',
+        texto: '4. La escala unificada 0–100: cómo leer cada número',
+      },
+      {
+        tipo: 'parrafo',
+        texto:
+          'El OPS equivalente y el K-BB% equivalente estabilizados se transforman a una escala lineal intuitiva de 0 a 100 puntos diseñada para comparar bateadores y lanzadores bajo un mismo estándar: 50.0 representa el nivel de reemplazo o profundidad de banca; 55.0 equivale al jugador titular promedio de la LVBP; entre 65.0 y 75.0 se ubican las estrellas consolidadas del circuito invernal y piezas de Triple-A; y por encima de 80.0 puntos aparecen los peloteros con impacto probado de Grandes Ligas.',
+      },
+      {
+        tipo: 'subtitulo',
+        texto: '5. Agregación por franquicia y validación histórica (2006–2026)',
+      },
+      {
+        tipo: 'parrafo',
+        texto:
+          'Para calcular el Power Ranking colectivo de cada franquicia —tanto en la LVBP como en el ranking unificado de 32 equipos del Caribe—, tomamos el promedio de los 9 mejores bateadores y los 8 mejores lanzadores activos en su roster, ponderando el peso real de la ofensiva (67.4%) y el pitcheo (32.6%) derivado de nuestra regresión logística pre-juego: z = 0.1822 + 0.0391·(Bat_Local - Bat_Vis) + 0.0100·(SP_Local - SP_Vis) + 0.0089·(BP_Local - BP_Vis).',
+      },
+      {
+        tipo: 'parrafo',
+        texto:
+          'Antes de llevar este índice a producción, lo sometimos a una prueba retrospectiva sobre 4,807 juegos oficiales de temporada regular entre 2006 y 2026. Calibrado únicamente con datos de 2006–2021, el modelo alcanzó un 56.04% de acierto fuera de muestra en el bloque 2022–2026 (y 63.2% en la campaña 2026-27 al corte de validación), demostrando que separar el talento intrínseco del ruido diario permite anticipar el comportamiento real de los equipos en el largo plazo.',
+      },
+    ],
+  },
+  {
+    id: 'metodologia-wpa-leverage-index-lvbp',
+    slug: 'metodologia-wpa-leverage-index-lvbp',
+    numero: '02',
+    estadoBadge: 'FIJADO · PRÓXIMAMENTE',
+    publicado: false,
+    categoria: 'METODOLOGÍA · IMPACTO SITUACIONAL',
+    fecha: 'Próxima publicación',
+    autor: 'Tibumétrico Lab',
+    lectura: 'Guía técnica',
+    titulo: 'WPA, WPA/LI y Leverage Index: cómo medimos cada turno según el apremio del juego',
+    bajada:
+      'Construcción de la matriz propia de Expectativa de Victoria (24 estados de bases y outs) en la LVBP, cálculo del índice de apremio (pLI) y separación entre contexto y ejecución.',
+  },
+  {
+    id: 'metodologia-owar-fwar-caribe',
+    slug: 'metodologia-owar-fwar-caribe',
+    numero: '03',
+    estadoBadge: 'FIJADO · EN DESARROLLO',
+    publicado: false,
+    categoria: 'METODOLOGÍA · VALOR SOBRE REEMPLAZO',
+    fecha: 'En construcción',
+    autor: 'Tibumétrico Lab',
+    lectura: 'Modelo en curso',
+    titulo: 'oWAR y fWAR adaptado al Caribe: nivel de reemplazo, ajuste de parque y valor acumulado',
+    bajada:
+      'Definición empírica del nivel de reemplazo en temporadas cortas de 56 juegos, ajuste por factores de parque (Guatamare, Maracaibo, Caracas, Valencia) y conversión de carreras a victorias.',
+  },
+]
+
 export const ARTICULO_PRINCIPAL = {
   id: 'paradoja-bravos-margarita-2026',
   slug: 'paradoja-bravos-margarita-2026',
@@ -187,7 +303,11 @@ export const NOTAS_BREVES = [
   },
 ]
 
-export const TODOS_LOS_ARTICULOS = [ARTICULO_PRINCIPAL, ...ARTICULOS_DESTACADOS]
+export const TODOS_LOS_ARTICULOS = [
+  ...ARTICULOS_FIJADOS.filter((a) => a.publicado),
+  ARTICULO_PRINCIPAL,
+  ...ARTICULOS_DESTACADOS,
+]
 
 export function buscarArticuloPorSlug(slug) {
   return TODOS_LOS_ARTICULOS.find((a) => a.slug === slug || a.id === slug) || null
