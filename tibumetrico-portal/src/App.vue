@@ -757,6 +757,95 @@ function headshotUrl(pid) {
           </section>
 
           <!-- RETÍCULA ASIMÉTRICA -->
+          <!-- PILARES METODOL?GICOS FIJADOS (POWER RANKING ? WPA ? oWAR/fWAR) -->
+          <section class="bg-white border-b border-[#D4D4D8] py-10">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
+                <div class="flex items-center gap-2.5">
+                  <span class="px-2 py-0.5 bg-[#161616] text-white text-[10px] font-mono font-bold uppercase tracking-widest">
+                    DOCUMENTACI?N BASE
+                  </span>
+                  <h2 class="text-xs font-extrabold uppercase tracking-[0.2em] text-[#161616]">
+                    Gu?as Metodol?gicas Fijadas
+                  </h2>
+                </div>
+                <span class="text-[11px] text-[#52525B]">
+                  Los tres motores matem?ticos detr?s de los ?ndices de Tibum?trico
+                </span>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <template v-for="pilar in ARTICULOS_FIJADOS" :key="pilar.id">
+                  <article
+                    v-if="pilar.publicado"
+                    @click="abrirArticulo(pilar)"
+                    class="bg-[#F4F4F2] border-2 border-[#161616] hover:bg-white transition p-6 flex flex-col justify-between cursor-pointer group"
+                  >
+                    <div>
+                      <div class="flex items-center justify-between gap-2">
+                        <span class="text-[10px] font-mono font-bold uppercase tracking-widest px-2 py-0.5 bg-[#1E3A5F] text-white">
+                          {{ pilar.estadoBadge }}
+                        </span>
+                        <span class="font-mono text-xs font-black text-[#1E3A5F]">#{{ pilar.numero }}</span>
+                      </div>
+
+                      <h3 class="text-lg font-extrabold text-[#161616] mt-4 leading-snug group-hover:text-[#1E3A5F] transition">
+                        <a :href="`/articulo/${pilar.slug}`" @click.prevent="abrirArticulo(pilar)">
+                          {{ pilar.titulo }}
+                        </a>
+                      </h3>
+
+                      <p class="text-xs text-[#52525B] mt-2.5 leading-relaxed">
+                        {{ pilar.bajada }}
+                      </p>
+                    </div>
+
+                    <div class="mt-6 pt-3.5 border-t border-[#D4D4D8] flex items-center justify-between text-xs">
+                      <span class="font-mono text-[11px] text-[#52525B]">{{ pilar.lectura }}</span>
+                      <span class="font-bold text-[#1E3A5F] uppercase tracking-wider group-hover:translate-x-0.5 transition">
+                        Leer gu?a completa ?
+                      </span>
+                    </div>
+                  </article>
+
+                  <article
+                    v-else
+                    class="bg-[#FAFAFA] border border-dashed border-[#A1A1AA] p-6 flex flex-col justify-between opacity-90"
+                  >
+                    <div>
+                      <div class="flex items-center justify-between gap-2">
+                        <span
+                          :class="[
+                            'text-[10px] font-mono font-bold uppercase tracking-widest px-2 py-0.5 border',
+                            pilar.estadoBadge.includes('DESARROLLO')
+                              ? 'bg-[#B84A39]/10 text-[#9A3425] border-[#B84A39]/30'
+                              : 'bg-[#E4E4E7] text-[#3F3F46] border-[#D4D4D8]',
+                          ]"
+                        >
+                          {{ pilar.estadoBadge }}
+                        </span>
+                        <span class="font-mono text-xs font-bold text-[#71717A]">#{{ pilar.numero }}</span>
+                      </div>
+
+                      <h3 class="text-base font-bold text-[#27272A] mt-4 leading-snug">
+                        {{ pilar.titulo }}
+                      </h3>
+
+                      <p class="text-xs text-[#71717A] mt-2.5 leading-relaxed">
+                        {{ pilar.bajada }}
+                      </p>
+                    </div>
+
+                    <div class="mt-6 pt-3.5 border-t border-[#E4E4E7] flex items-center justify-between text-[11px] font-mono text-[#71717A]">
+                      <span>{{ pilar.fecha }}</span>
+                      <span>{{ pilar.lectura }}</span>
+                    </div>
+                  </article>
+                </template>
+              </div>
+            </div>
+          </section>
+
           <section class="max-w-7xl mx-auto px-4 sm:px-6 py-12">
             <div class="flex items-center justify-between mb-6">
               <h2 class="text-xs font-bold uppercase tracking-[0.2em] text-[#52525B]">
