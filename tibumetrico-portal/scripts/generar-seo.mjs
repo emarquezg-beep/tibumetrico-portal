@@ -149,3 +149,12 @@ Sitemap: ${SITE_URL}/sitemap.xml
 fs.writeFileSync(path.join(DIST_DIR, 'robots.txt'), robotsTxt, 'utf-8')
 
 console.log(`[SEO] Generadas ${TODOS_LOS_ARTICULOS.length} paginas de articulos + sitemap.xml y robots.txt`)
+
+// Ruta estatica /publicar (oculta para buscadores)
+const _fsPub = await import('node:fs')
+_fsPub.mkdirSync('dist/publicar', { recursive: true })
+const _htmlPub = _fsPub
+  .readFileSync('dist/index.html', 'utf-8')
+  .replace('content="index, follow"', 'content="noindex, nofollow"')
+_fsPub.writeFileSync('dist/publicar/index.html', _htmlPub, 'utf-8')
+console.log('[SEO] Ruta /publicar generada (noindex)')
