@@ -50,7 +50,7 @@ watch(bajada, (val) => {
 
 const bloquesContenido = computed(() => {
   const lineas = cuerpoTexto.value
-    .split(/?/)
+    .split(/\r?\n/)
     .map((l) => l.trim())
     .filter(Boolean)
 
