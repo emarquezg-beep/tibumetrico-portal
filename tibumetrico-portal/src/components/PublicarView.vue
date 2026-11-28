@@ -12,8 +12,8 @@ const errorJson = ref('')
 const titulo = ref('')
 const slug = ref('')
 const slugEditadoManual = ref(false)
-const categoria = ref('INVESTIGACI?N ? LVBP 2026-27')
-const autor = ref('Ernesto M?rquez ? Tibum?trico Research')
+const categoria = ref('INVESTIGACIÓN · LVBP 2026-27')
+const autor = ref('Ernesto Márquez · Tibumétrico Research')
 const bajada = ref('')
 const seoDescription = ref('')
 const keywords = ref('')
@@ -29,7 +29,7 @@ const errorEnvio = ref('')
 function slugify(str) {
   return String(str || '')
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
@@ -50,7 +50,7 @@ watch(bajada, (val) => {
 
 const bloquesContenido = computed(() => {
   const lineas = cuerpoTexto.value
-    .split(/\r?\n/)
+    .split(/?/)
     .map((l) => l.trim())
     .filter(Boolean)
 
@@ -120,14 +120,14 @@ function importarDesdeJsonSkill() {
           if (b.tipo === 'cita') return `> ${b.texto}`
           return b.texto
         })
-        .join('\n\n')
+        .join('')
     } else if (typeof obj.cuerpo === 'string') {
       cuerpoTexto.value = obj.cuerpo
     }
 
     modoJson.value = false
   } catch (e) {
-    errorJson.value = 'JSON inv?lido: ' + e.message
+    errorJson.value = 'JSON inválido: ' + e.message
   }
 }
 
@@ -140,7 +140,7 @@ async function publicarArticulo() {
     return
   }
   if (!titulo.value.trim() || !slug.value.trim() || bloquesContenido.value.length === 0) {
-    errorEnvio.value = 'Completa al menos t?tulo, slug y cuerpo del art?culo.'
+    errorEnvio.value = 'Completa al menos título, slug y cuerpo del artículo.'
     return
   }
 
@@ -150,10 +150,10 @@ async function publicarArticulo() {
   const payloadArticulo = {
     id: slugFinal,
     slug: slugFinal,
-    categoria: categoria.value.trim() || 'AN?LISIS ? LVBP',
+    categoria: categoria.value.trim() || 'ANÁLISIS · LVBP',
     fecha: fecha.texto,
     fechaISO: fecha.iso,
-    autor: autor.value.trim() || 'Ernesto M?rquez ? Tibum?trico Research',
+    autor: autor.value.trim() || 'Ernesto Márquez · Tibumétrico Research',
     lectura: minutosLectura.value,
     titulo: titulo.value.trim(),
     seoDescription: (seoDescription.value || bajada.value).trim().slice(0, 165),
@@ -161,11 +161,11 @@ async function publicarArticulo() {
     bajada: bajada.value.trim(),
     datoDestacado: {
       cifra: cifraDestacada.value.trim() || 'LVBP 2026',
-      etiqueta: etiquetaDestacada.value.trim() || 'An?lisis saberm?trico Tibum?trico',
+      etiqueta: etiquetaDestacada.value.trim() || 'Análisis sabermétrico Tibumétrico',
     },
     metricaArte: {
       valor: cifraDestacada.value.trim() || 'LVBP',
-      sub: etiquetaDestacada.value.trim() || 'An?lisis Tibum?trico',
+      sub: etiquetaDestacada.value.trim() || 'Análisis Tibumétrico',
       acento: acentoArte.value,
     },
     contenido: bloquesContenido.value,
@@ -201,10 +201,10 @@ async function publicarArticulo() {
     <div class="flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-[#D4D4D8]">
       <div>
         <span class="text-[10px] font-mono font-bold uppercase tracking-widest px-2 py-0.5 bg-[#161616] text-white">
-          REDACCI?N ? CMS GIT-OPS
+          REDACCIÓN · CMS GIT-OPS
         </span>
         <h1 class="text-2xl font-extrabold text-[#161616] mt-2">
-          Publicar nuevo an?lisis en Tibum?trico
+          Publicar nuevo análisis en Tibumétrico
         </h1>
       </div>
 
@@ -213,13 +213,13 @@ async function publicarArticulo() {
           @click="modoJson = !modoJson"
           class="px-3 py-2 text-xs font-mono font-bold border border-[#161616] bg-white hover:bg-[#161616] hover:text-white transition cursor-pointer"
         >
-          {{ modoJson ? '? Volver al formulario' : '{ } Pegar JSON del Skill' }}
+          {{ modoJson ? '← Volver al formulario' : '{ } Pegar JSON del Skill' }}
         </button>
         <button
           @click="$emit('volver')"
           class="px-3 py-2 text-xs font-bold text-[#52525B] hover:text-[#161616] cursor-pointer"
         >
-          Cerrar editor ?
+          Cerrar editor ✕
         </button>
       </div>
     </div>
@@ -230,7 +230,7 @@ async function publicarArticulo() {
         Importar salida directa del Skill de Gemini
       </h2>
       <p class="text-xs text-[#52525B] mt-1">
-        Pega aqu? el bloque JSON generado por tu Skill saberm?trico para rellenar autom?ticamente el art?culo, slug, SEO y citas.
+        Pega aquí el bloque JSON generado por tu Skill sabermétrico para rellenar automáticamente el artículo, slug, SEO y citas.
       </p>
       <textarea
         v-model="jsonCrudo"
@@ -243,11 +243,11 @@ async function publicarArticulo() {
         @click="importarDesdeJsonSkill"
         class="mt-3 px-5 py-2.5 bg-[#1E3A5F] text-white text-xs font-bold uppercase tracking-wider hover:bg-[#161616] transition cursor-pointer"
       >
-        Cargar datos en el formulario ?
+        Cargar datos en el formulario →
       </button>
     </div>
 
-    <!-- Ret?cula Editor + Vista Previa -->
+    <!-- Retícula Editor + Vista Previa -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-8">
       <!-- Formulario (7 cols) -->
       <div class="lg:col-span-7 space-y-5 bg-white border border-[#D4D4D8] p-6">
@@ -259,21 +259,21 @@ async function publicarArticulo() {
             <input
               v-model="password"
               type="password"
-              placeholder="????????????"
+              placeholder="••••••••••••"
               class="w-full px-3 py-2 text-sm bg-[#F4F4F2] border border-[#D4D4D8] focus:border-[#161616] outline-none"
             />
           </div>
 
           <div>
             <label class="block text-[11px] font-mono font-bold uppercase text-[#52525B] mb-1">
-              Ubicaci?n en Portada
+              Ubicación en Portada
             </label>
             <select
               v-model="destino"
               class="w-full px-3 py-2 text-sm bg-[#F4F4F2] border border-[#D4D4D8] focus:border-[#161616] outline-none"
             >
               <option value="principal">Portada Principal (Hero)</option>
-              <option value="destacado">Art?culos Destacados</option>
+              <option value="destacado">Artículos Destacados</option>
               <option value="fijado_02">Pilar Fijado #02 (WPA)</option>
               <option value="fijado_03">Pilar Fijado #03 (oWAR/fWAR)</option>
             </select>
@@ -282,7 +282,7 @@ async function publicarArticulo() {
 
         <div>
           <label class="block text-[11px] font-mono font-bold uppercase text-[#52525B] mb-1">
-            Titular del Art?culo *
+            Titular del Artículo *
           </label>
           <input
             v-model="titulo"
@@ -307,7 +307,7 @@ async function publicarArticulo() {
 
           <div>
             <label class="block text-[11px] font-mono font-bold uppercase text-[#52525B] mb-1">
-              Antet?tulo / Categor?a
+              Antetítulo / Categoría
             </label>
             <input
               v-model="categoria"
@@ -324,7 +324,7 @@ async function publicarArticulo() {
           <textarea
             v-model="bajada"
             rows="2"
-            placeholder="Resumen ejecutivo de 2 l?neas que engancha al lector..."
+            placeholder="Resumen ejecutivo de 2 líneas que engancha al lector..."
             class="w-full px-3 py-2 text-sm bg-[#F4F4F2] border border-[#D4D4D8] focus:border-[#161616] outline-none"
           ></textarea>
         </div>
@@ -348,7 +348,7 @@ async function publicarArticulo() {
           <input
             v-model="keywords"
             type="text"
-            placeholder="Palabras clave separadas por coma (LVBP, WPA, sabermetr?a...)"
+            placeholder="Palabras clave separadas por coma (LVBP, WPA, sabermetría...)"
             class="w-full px-3 py-1.5 text-xs bg-white border border-[#D4D4D8] outline-none"
           />
         </div>
@@ -368,7 +368,7 @@ async function publicarArticulo() {
           </div>
           <div class="sm:col-span-2">
             <label class="block text-[11px] font-mono font-bold uppercase text-[#52525B] mb-1">
-              Explicaci?n de la Cifra
+              Explicación de la Cifra
             </label>
             <input
               v-model="etiquetaDestacada"
@@ -383,29 +383,29 @@ async function publicarArticulo() {
         <div>
           <div class="flex items-center justify-between mb-1">
             <label class="text-[11px] font-mono font-bold uppercase text-[#52525B]">
-              Cuerpo del Art?culo *
+              Cuerpo del Artículo *
             </label>
             <span class="text-[11px] font-mono text-[#52525B]">
-              Usa <strong>##</strong> para subt?tulos y <strong>&gt;</strong> para citas ? {{ minutosLectura }}
+              Usa <strong>##</strong> para subtítulos y <strong>&gt;</strong> para citas · {{ minutosLectura }}
             </span>
           </div>
           <textarea
             v-model="cuerpoTexto"
             rows="14"
-            placeholder="Escribe cada p?rrafo separado por una l?nea en blanco.&#10;&#10;## 1. Primer subt?tulo&#10;&#10;Texto del an?lisis con cifras exactas...&#10;&#10;> ?Cita destacada del estudio.?"
+            placeholder="Escribe cada párrafo separado por una línea en blanco.&#10;&#10;## 1. Primer subtítulo&#10;&#10;Texto del análisis con cifras exactas...&#10;&#10;> «Cita destacada del estudio.»"
             class="w-full px-3 py-2.5 text-sm leading-relaxed bg-[#F4F4F2] border border-[#D4D4D8] focus:border-[#161616] outline-none"
           ></textarea>
         </div>
 
-        <!-- Alertas y Bot?n Publicar -->
+        <!-- Alertas y Botón Publicar -->
         <div v-if="errorEnvio" class="p-3 bg-[#B84A39]/10 border border-[#B84A39] text-xs font-bold text-[#9A3425]">
           {{ errorEnvio }}
         </div>
 
         <div v-if="resultado" class="p-4 bg-[#1E3A5F] text-white text-xs space-y-1">
-          <p class="font-bold">? Art?culo enviado a GitHub (commit {{ resultado.commit }})</p>
+          <p class="font-bold">✓ Artículo enviado a GitHub (commit {{ resultado.commit }})</p>
           <p class="opacity-90">
-            Vercel est? generando el HTML est?tico y actualizando el sitemap.xml. Estar? en vivo en ~35 segundos en:
+            Vercel está generando el HTML estático y actualizando el sitemap.xml. Estará en vivo en ~35 segundos en:
             <a :href="resultado.url" class="underline font-mono font-bold">{{ resultado.url }}</a>
           </p>
         </div>
@@ -415,7 +415,7 @@ async function publicarArticulo() {
           :disabled="enviando"
           class="w-full py-3.5 bg-[#161616] text-white text-xs font-extrabold uppercase tracking-widest hover:bg-[#1E3A5F] disabled:opacity-50 transition cursor-pointer"
         >
-          {{ enviando ? 'Publicando en GitHub y generando SEO...' : 'Publicar Art?culo en Tibum?trico.com ?' }}
+          {{ enviando ? 'Publicando en GitHub y generando SEO...' : 'Publicar Artículo en Tibumétrico.com →' }}
         </button>
       </div>
 
@@ -428,13 +428,13 @@ async function publicarArticulo() {
 
           <div class="mt-4 pt-4 border-t border-[#E4E4E7]">
             <span class="text-[10px] font-mono font-bold uppercase tracking-widest text-[#1E3A5F]">
-              {{ categoria || 'CATEGOR?A' }}
+              {{ categoria || 'CATEGORÍA' }}
             </span>
             <h2 class="text-xl font-extrabold text-[#161616] mt-2 leading-tight">
-              {{ titulo || 'El titular de tu art?culo aparecer? aqu?' }}
+              {{ titulo || 'El titular de tu artículo aparecerá aquí' }}
             </h2>
             <p class="text-xs text-[#52525B] mt-2 leading-relaxed">
-              {{ bajada || 'La bajada o resumen editorial se mostrar? aqu? debajo del titular.' }}
+              {{ bajada || 'La bajada o resumen editorial se mostrará aquí debajo del titular.' }}
             </p>
 
             <div v-if="cifraDestacada" class="mt-4 p-3 bg-[#F4F4F2] border-l-4 border-[#1E3A5F]">
