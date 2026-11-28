@@ -1,4 +1,4 @@
-import editorial from './editorial.json'
+import editorial from './editorial.json' with { type: 'json' }
 
 export const ARTICULOS_FIJADOS = editorial.fijados || []
 export const ARTICULO_PRINCIPAL = editorial.principal

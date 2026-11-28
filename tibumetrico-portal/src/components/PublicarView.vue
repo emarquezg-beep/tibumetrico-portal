@@ -29,7 +29,7 @@ const errorEnvio = ref('')
 function slugify(str) {
   return String(str || '')
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
@@ -50,8 +50,7 @@ watch(bajada, (val) => {
 
 const bloquesContenido = computed(() => {
   const lineas = cuerpoTexto.value
-    .split(/?
-/)
+    .split(/\r?\n/)
     .map((l) => l.trim())
     .filter(Boolean)
 
@@ -121,9 +120,7 @@ function importarDesdeJsonSkill() {
           if (b.tipo === 'cita') return `> ${b.texto}`
           return b.texto
         })
-        .join('
-
-')
+        .join('\n\n')
     } else if (typeof obj.cuerpo === 'string') {
       cuerpoTexto.value = obj.cuerpo
     }
@@ -227,7 +224,7 @@ async function publicarArticulo() {
       </div>
     </div>
 
-    <!-- Modal / Panel Pegar JSON del Skill -->
+    <!-- Panel Pegar JSON del Skill -->
     <div v-if="modoJson" class="mt-6 bg-white border-2 border-[#1E3A5F] p-6">
       <h2 class="text-sm font-extrabold uppercase tracking-wider text-[#1E3A5F]">
         Importar salida directa del Skill de Gemini
@@ -250,7 +247,7 @@ async function publicarArticulo() {
       </button>
     </div>
 
-    <!-- Reticula Editor + Vista Previa -->
+    <!-- Ret?cula Editor + Vista Previa -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-8">
       <!-- Formulario (7 cols) -->
       <div class="lg:col-span-7 space-y-5 bg-white border border-[#D4D4D8] p-6">
