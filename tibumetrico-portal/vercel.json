@@ -5,7 +5,6 @@
     { "source": "/articulo/:slug", "destination": "/articulo/:slug/index.html" },
     { "source": "/lvbp", "destination": "/lvbp/index.html" },
     { "source": "/caribe", "destination": "/caribe/index.html" },
-    { "source": "/publicar", "destination": "/index.html" },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    { "source": "/publicar", "destination": "/index.html" }
   ]
 }
