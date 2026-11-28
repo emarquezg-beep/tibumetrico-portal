@@ -1,4 +1,5 @@
 <script setup>
+import PublicarView from './components/PublicarView.vue'
 import { ref, computed, onMounted } from 'vue'
 import {
   ARTICULOS_FIJADOS,
@@ -77,6 +78,9 @@ function sincronizarDesdeUrl() {
     articuloAbierto.value = encontrado
   } else if (path === '/lvbp') {
     vistaActiva.value = 'lvbp'
+    articuloAbierto.value = null
+  } else if (path === '/publicar') {
+    vistaActiva.value = 'publicar'
     articuloAbierto.value = null
   } else if (path === '/caribe') {
     vistaActiva.value = 'caribe'
@@ -574,6 +578,9 @@ function headshotUrl(pid) {
     </header>
 
     <main class="flex-1">
+      <PublicarView @volver="cambiarVista('editorial')" v-if="vistaActiva === 'publicar'"/>
+      <template v-else>
+
       <div v-if="cargando" class="max-w-7xl mx-auto px-6 py-24 text-center text-sm text-[#52525B]">
         Sincronizando base sabermétrica multi-liga...
       </div>
@@ -1914,6 +1921,7 @@ function headshotUrl(pid) {
           </section>
         </div>
       </template>
+          </template>
     </main>
 
     <!-- FOOTER EDITORIAL -->
